@@ -1,0 +1,24 @@
+{
+  "chip": "chips/esp32c3.json",
+  "svd": "esp32c3.svd",
+  "openocd": {
+    "board_cfg": "board/esp32c3-builtin.cfg",
+    "flash_command": "program_esp",
+    "tcl_port": 6666,
+    "gdb_port": 3333,
+    "telnet_port": 4444
+  },
+  "flash": {
+    "default_offsets": {
+      "bootloader": "0x0",
+      "partition_table": "0x8000",
+      "application": "0x10000"
+    }
+  },
+  "gdb": {
+    "executable": "riscv32-esp-elf-gdb-no-python"
+  },
+  "logging": {
+    "method": "rtt"
+  }
+}

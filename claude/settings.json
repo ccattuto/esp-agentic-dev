@@ -1,0 +1,18 @@
+{
+  "allowedTools": [
+    "Read",
+    "Edit",
+    "Write",
+    "Bash(python3 esp_target.py:*)",
+    "Bash(python3 rtt_reader.py:*)",
+    "Bash(idf.py build:*)",
+    "Bash(cat .esp-agent/*)",
+    "Bash(head:*)",
+    "Bash(tail:*)",
+    "Bash(wc:*)",
+    "Bash(grep:*)",
+    "Bash(ls:*)",
+    "Bash(riscv32-esp-elf-gdb-no-python:*)",
+    "Bash(riscv32-esp-elf-nm:*)"
+  ]
+}
