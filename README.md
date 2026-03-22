@@ -8,11 +8,11 @@ Build, flash, inspect, and debug ESP32 firmware entirely over JTAG — no serial
 
 Everything routes through a single interface: OpenOCD over JTAG.
 
-- **Flashing** goes through OpenOCD’s JTAG flash programmer (`program_esp`)
-- **Logging** uses [SEGGER RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/) — a shared-memory ring buffer read via JTAG debug access, no UART involvement
-- **Register inspection** uses SVD-aware named peripheral access with bitfield decode
 - **Target control** is a single Python tool (`esp_target.py`) for erasing, flashing, resetting, halting, resuming, and inspecting the target
+- **Flashing** goes through OpenOCD’s JTAG flash programmer (`program_esp`)
+- **Register inspection** uses SVD-aware named peripheral access with bitfield decode
 - **Debugging** uses GDB over OpenOCD’s RSP port
+- **Logging** uses [SEGGER RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/) — a shared-memory ring buffer read via JTAG debug access, no UART involvement
 
 With a single stable control point, the agent can concurrently:
 
@@ -121,24 +121,48 @@ ESP32-C3 with built-in USB-JTAG:
 ```
 
 ### 5. Start a session
-
+ 
+**You (human) — start the infrastructure:**
+ 
 ```bash
-# Start OpenOCD
 ./esp-session-start.sh
-
-# Verify
+ 
 python3 esp_target.py health
 # → {"ok": true, "state": "running", "chip": "ESP32-C3", ...}
-
-# Build and flash
+```
+ 
+**You (human) — launch the agent:**
+ 
+```bash
+claude   # or your preferred agentic coding tool
+```
+ 
+**The agent takes it from here** — building, flashing, reading logs,
+inspecting registers, editing code. A typical agent session looks like:
+ 
+```bash
+# Agent builds
 idf.py build
+ 
+# Agent flashes
 python3 esp_target.py flash-and-run build/ --app-only
-
-# Start RTT logging (after firmware with RTT is flashed)
-python3 rtt_reader.py --elf build/your_project.elf --output .esp-agent/rtt.log &
-
-# Read logs
+ 
+# Agent starts log capture (if firmware has RTT)
+python3 rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log &
+ 
+# Agent reads firmware output
 cat .esp-agent/rtt.log
+ 
+# Agent inspects hardware state
+python3 esp_target.py decode GPIO.OUT
+ 
+# Agent edits code, repeats
+```
+ 
+**You (human) — when done:**
+ 
+```bash
+./esp-session-stop.sh
 ```
 
 ## Adding RTT to your firmware
@@ -333,5 +357,4 @@ Contributions welcome. The most useful additions are:
 
 - Chip configs for other ESP32 variants (S2, S3, C6, H2)
 - Testing on different host platforms (Linux, Windows WSL)
-- Improvements to the RTT reader performance (the SRAM scan is slow)
 - Integration with other agentic coding tools beyond Claude Code
