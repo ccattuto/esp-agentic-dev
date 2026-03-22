@@ -42,17 +42,20 @@ Claude Code (or any agent)
   ├── reads .esp-agent/rtt.log        → firmware log output
   └── reads .esp-agent/openocd.log    → infrastructure diagnostics
 
+OpenOCD (persistent daemon)
+  ├── Tcl :6666    — commands from tools
+  ├── GDB :3333    — on-demand debugging
+  └── USB-JTAG     → ESP32 target
+
 esp_target.py
   └── OpenOCD Tcl port (:6666)        → mww/mdw, program_esp, halt/resume
 
 rtt_reader.py (background daemon)
   └── OpenOCD Tcl port (:6666)        → polls RTT ring buffer via mdw/mww
-
-OpenOCD (persistent daemon)
-  ├── Tcl :6666    — commands from tools
-  ├── GDB :3333    — on-demand debugging
-  └── USB-JTAG     → ESP32 target
 ```
+
+See also this [diagram](docs/esp-agentic-architecture.pdf).
+
 
 ## Quick start
 
