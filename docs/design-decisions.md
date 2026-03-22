@@ -12,51 +12,19 @@ The entire workflow routes through OpenOCD's JTAG interface. Serial is
 not used at any point — not for flashing, not for logging, not for reset
 control. This eliminates a class of reliability problems:
 
-- CDC-ACM on macOS has reconnection bugs, phantom device entries, and
-  multi-second enumeration delays after each chip reset.
 - Serial device paths change unpredictably (`/dev/cu.usbmodemXXXX`).
 - The serial bootloader protocol (used by esptool.py) requires DTR/RTS
   toggling for reset-into-download-mode, which is brittle and
   board-dependent.
 - An autonomous agent cannot recover from a serial port that disappears
   mid-operation.
+- CDC-ACM on macOS has reconnection bugs, phantom device entries, and
+  multi-second enumeration delays after each chip reset.
 
 JTAG via OpenOCD avoids all of this. The USB-JTAG link on ESP32-C3 shares
 the same physical USB connection as the CDC-ACM serial port, but OpenOCD's
 `esp_usb_jtag` driver manages reconnection at the JTAG protocol level,
 which is far more robust than the OS-level USB device lifecycle.
-
-### RTT for continuous logging, apptrace for diagnostics
-
-Two logging paths are supported, each with distinct tradeoffs:
-
-**SEGGER RTT** is the primary logging mechanism for the agentic development
-loop. The firmware writes to a shared-memory ring buffer in SRAM. A Python
-reader (`rtt_reader.py`) polls the buffer via OpenOCD memory reads (`mdw`)
-on its own Tcl connection. This design means:
-
-- Output is plain text, immediately readable by the agent.
-- The reader doesn't block OpenOCD — `esp_target.py` works normally
-  while logs stream.
-- No ESP-IDF dependency — RTT works on bare-metal or any RTOS.
-- The agent can read, write, and inspect registers while observing
-  firmware output, all concurrently.
-
-**ESP-IDF apptrace** captures all `ESP_LOGx` output (including internal
-WiFi, BLE, and RTOS logging) by redirecting the vprintf function. However:
-
-- `esp apptrace start` blocks the OpenOCD event loop — no other tool
-  can communicate with OpenOCD during a capture.
-- Output is binary and requires post-processing with `logtrace_proc.py`.
-- Low-rate logging requires explicit `esp_apptrace_flush()` calls because
-  the 16KB trace buffer only becomes visible to the host when a block
-  fills up.
-- On RISC-V targets, the apptrace handshake fires during boot — OpenOCD
-  must be connected and the target must be reset for the debug stubs to
-  register.
-
-Apptrace is useful for deep diagnostic sessions where you need to see
-ESP-IDF internal logging. RTT is better for everything else.
 
 ### OpenOCD as the single control point
 
@@ -85,58 +53,39 @@ which ports, which SVD file, which GDB executable.
 This means chip configs can be shared across projects and contributed
 back to the repository, while project configs remain local and editable.
 
+### RTT for continuous logging, apptrace for diagnostics
+
+Two logging paths are supported, each with distinct tradeoffs:
+
+**SEGGER RTT** is the primary logging mechanism for the agentic development
+loop. The firmware writes to a shared-memory ring buffer in RAM. A Python
+reader (`rtt_reader.py`) polls the buffer via OpenOCD memory reads (`mdw`)
+on its own Tcl connection. This design means:
+
+- Output is plain text, immediately readable by the agent.
+- The reader doesn't block OpenOCD — `esp_target.py` works normally
+  while logs stream.
+- No ESP-IDF dependency — RTT works on bare-metal or any RTOS.
+- The agent can read, write, and inspect registers while observing
+  firmware output, all concurrently.
+
+**ESP-IDF apptrace** captures all `ESP_LOGx` output (including internal
+WiFi, BLE, and RTOS logging) by redirecting the vprintf function. However:
+
+- `esp apptrace start` blocks the OpenOCD event loop — no other tool
+  can communicate with OpenOCD during a capture.
+- Output is binary and requires post-processing with `logtrace_proc.py`.
+- Low-rate logging requires explicit `esp_apptrace_flush()` calls because
+  the trace data only becomes visible to the host when the trace buffer
+  fills up.
+- On RISC-V targets, the apptrace handshake fires during boot — OpenOCD
+  must be connected and the target must be reset for the debug stubs to
+  register.
+
+Apptrace is useful for deep diagnostic sessions where you need to see
+ESP-IDF internal logging. RTT is better for everything else.
+
 ## Implementation details
-
-### mww/mdw instead of write_memory/read_memory
-
-OpenOCD has two sets of memory access commands: the legacy `mww`/`mdw`
-commands and the newer Tcl-native `write_memory`/`read_memory`. We use
-the legacy commands because:
-
-- `write_memory` has a different argument format than expected (the data
-  is a Tcl list, not a count + values), and it failed silently on
-  Espressif's OpenOCD fork in testing.
-- `mww`/`mdw` work identically through both the telnet and Tcl interfaces.
-- They've been stable across OpenOCD versions for years.
-
-### No Tcl banner drain on connect
-
-The Tcl port (:6666) sends nothing when a client connects — unlike the
-telnet port (:4444) which sends a welcome banner. Early versions of the
-tool attempted to read a banner on connect, causing a timeout hang. The
-fix was simply to not read anything after connecting.
-
-### Explicit register reads
-
-OpenOCD's `reg` command lists all register names but does not read their
-values from the target. Values are only fetched when a specific register
-is queried with `reg <name>`. The `regs` command in `esp_target.py`
-explicitly reads each core register and key CSRs individually, rather
-than trying to parse the `reg` listing output.
-
-### RISC-V interrupt locks for RTT
-
-The SEGGER RTT library's lock macros use ARM-specific instructions
-(PRIMASK/BASEPRI) by default. For RISC-V targets like ESP32-C3, the
-patched `SEGGER_RTT_Conf.h` adds a `#if defined(__riscv)` guard that
-uses `csrrci`/`csrw` on the `mstatus` MIE bit to disable/restore
-interrupts during ring buffer pointer updates.
-
-### RTT control block discovery
-
-The RTT reader supports three methods for finding the control block,
-in order of speed:
-
-1. **Direct address** (`--address`) — instant, used when the address is
-   known from a previous session.
-2. **ELF symbol lookup** (`--elf`) — runs `nm` on the ELF to find the
-   `_SEGGER_RTT` symbol. Instant, but requires the ELF to be built.
-3. **SRAM scan** (default) — reads SRAM in chunks via `mdw` looking for
-   the `"SEGGER RTT"` magic signature. Slow (400KB of SRAM at ~128 bytes
-   per command round-trip) but works without any symbol information.
-
-The control block address changes when firmware is rebuilt with a different
-static variable layout, so the reader must be restarted after reflashing.
 
 ### Session management
 
@@ -158,10 +107,48 @@ which is generated by the ESP-IDF build system and reflects the actual
 partition layout configured in the project. This ensures correctness
 even with custom partition schemes.
 
+### mww/mdw instead of write_memory/read_memory
+
+OpenOCD has two sets of memory access commands: the legacy `mww`/`mdw`
+commands and the newer Tcl-native `write_memory`/`read_memory`.
+We use the legacy commands because `mww`/`mdw` work identically through both the telnet and Tcl interfaces,
+and they've been stable across OpenOCD versions for years.
+
+### Explicit register reads
+
+OpenOCD's `reg` command lists all register names but does not read their
+values from the target. Values are only fetched when a specific register
+is queried with `reg <name>`. The `regs` command in `esp_target.py`
+explicitly reads each core register and key CSRs individually, rather
+than trying to parse the `reg` listing output.
+
+### RTT control block discovery
+
+The RTT reader supports three methods for finding the control block,
+in order of speed:
+
+1. **Direct address** (`--address`) — instant, used when the address is
+   known from a previous session.
+2. **ELF symbol lookup** (`--elf`) — runs `nm` on the ELF to find the
+   `_SEGGER_RTT` symbol. Instant, but requires the ELF to be built.
+3. **RAM scan** (default) — reads RAM in chunks via `mdw` looking for
+   the `"SEGGER RTT"` magic signature. Slow but works without any symbol information.
+
+The control block address changes when firmware is rebuilt with a different
+static variable layout, so the reader must be restarted after reflashing.
+
+### RISC-V interrupt masking for RTT
+
+The SEGGER RTT library's lock macros use ARM-specific instructions
+(PRIMASK/BASEPRI) by default. For RISC-V targets like ESP32-C3, the
+patched `SEGGER_RTT_Conf.h` adds a `#if defined(__riscv)` guard that
+uses `csrrci`/`csrw` on the `mstatus` MIE bit to disable/restore
+interrupts during ring buffer pointer updates.
+
 ### apptrace flush requirement
 
-ESP-IDF's apptrace protocol exposes trace data to the host in 16KB block
-swaps. With low-throughput logging (a few lines per second), the buffer
-never fills and data never becomes visible to OpenOCD's poller. An
-explicit `esp_apptrace_flush()` call is required in the firmware loop
-to force the transfer. This is architectural — not a configuration issue.
+ESP-IDF's apptrace protocol exposes trace data to the host in blocks of fixed size.
+With low-throughput logging (a few lines per second),
+the buffer never fills and data never becomes visible to OpenOCD's poller.
+An explicit `esp_apptrace_flush()` call is required in the firmware loop
+to force the transfer.
