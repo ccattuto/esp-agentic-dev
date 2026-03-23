@@ -3,7 +3,11 @@
     "Read",
     "Edit",
     "Write",
+    "Bash(./esp-session-start.sh*)",
+    "Bash(./esp-session-stop.sh*)",
+    "Bash(./esp_target.py:*)",
     "Bash(python3 esp_target.py:*)",
+    "Bash(./rtt_reader.py:*)",
     "Bash(python3 rtt_reader.py:*)",
     "Bash(idf.py build:*)",
     "Bash(cat .esp-agent/*)",
@@ -12,7 +16,10 @@
     "Bash(wc:*)",
     "Bash(grep:*)",
     "Bash(ls:*)",
+    "Bash(echo:*)",
+    "Bash(riscv32-esp-elf-gdb:*)",
     "Bash(riscv32-esp-elf-gdb-no-python:*)",
-    "Bash(riscv32-esp-elf-nm:*)"
+    "Bash(riscv32-esp-elf-nm:*)",
+    "Bash(riscv32-esp-elf-addr2line:*)"
   ]
 }
