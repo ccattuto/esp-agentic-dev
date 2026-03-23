@@ -78,8 +78,9 @@ cp esp-agentic-dev/tools/svd_parser.py .
 cp esp-agentic-dev/tools/rtt_reader.py .
 
 # Copy templates
-cp esp-agentic-dev/templates/esp_target_config.json .
 cp esp-agentic-dev/templates/CLAUDE.md .
+cp esp-agentic-dev/templates/esp_target_config.json .
+cp esp-agentic-dev/templates/board.md .
 cp esp-agentic-dev/templates/esp-session-start.sh .
 cp esp-agentic-dev/templates/esp-session-stop.sh .
 chmod +x esp-session-start.sh esp-session-stop.sh
@@ -122,6 +123,11 @@ ESP32-C3 with built-in USB-JTAG:
   }
 }
 ```
+
+Edit board.md to describe your specific development board
+— pin assignments, LEDs, buttons, I2C/SPI buses, and any hardware constraints.
+This gives the agent the context it needs to write correct pin
+configurations and peripheral initialization code.
 
 ### 5. Start a session
  

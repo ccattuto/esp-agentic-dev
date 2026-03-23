@@ -18,6 +18,12 @@ Two configuration files control the tooling:
 **`chips/<chip>.json`** — pure hardware reference (memory map, architecture).
 Referenced by `esp_target_config.json`. Never needs editing per-project.
 
+**`board.md`** — describes the specific development board: GPIO pin
+assignments, I2C/SPI bus connections, LEDs (type, pin, protocol),
+buttons, sensors, power domains, and any other hardware context
+relevant to firmware development. Read this before writing any code
+that interacts with board peripherals.
+
 To see the full resolved configuration:
 ```
 python3 esp_target.py info
@@ -37,6 +43,7 @@ All tools (`esp_target.py`, `rtt_reader.py`, `esp-session-start.sh`) read
 project/
 ├── CLAUDE.md                     # this file
 ├── esp_target_config.json        # tooling config (OpenOCD, GDB, logging)
+├── board.md                      # board-specific hardware (pins, LEDs, buses)
 ├── main/
 │   ├── CMakeLists.txt            # component registration (idf_component_register)
 │   ├── *.c / *.h                 # application source
@@ -60,7 +67,7 @@ project/
 ├── esp_target.py                 # target control tool
 ├── svd_parser.py                 # SVD parser (used by esp_target.py)
 ├── rtt_reader.py                 # RTT log reader daemon
-├── esp-session-start.sh          # launch OpenOCD + RTT reader
+├── esp-session-start.sh          # launch OpenOCD
 ├── esp-session-stop.sh           # tear down daemons
 └── .esp-agent/                   # runtime state (created at session start)
     ├── openocd.log               # OpenOCD daemon log
