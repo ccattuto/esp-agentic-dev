@@ -2,7 +2,7 @@
 
 **A pure-JTAG development framework for ESP32, designed for agentic coding assistants.**
 
-Build, flash, inspect, and debug ESP32 firmware entirely over JTAG — no serial port at any point. Designed to give LLM coding agents like [Claude Code](https://code.claude.com) full autonomous control over the develop → flash → inspect → edit loop.
+Build, flash, inspect, and debug ESP32 firmware entirely over JTAG. Designed to give LLM coding agents like [Claude Code](https://code.claude.com) full autonomous control over the develop → flash → inspect → edit loop.
 
 ## Design
 
