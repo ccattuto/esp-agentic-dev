@@ -131,9 +131,11 @@ configurations and peripheral initialization code.
 
 ### 5. Start a session
  
-**You (human) — start the infrastructure:**
+**You (human) — activate the ESP-IDF environment and start the infrastructure::**
  
 ```bash
+. $IDF_PATH/export.sh   # if not already active in this shell
+
 ./esp-session-start.sh
  
 python3 esp_target.py health
@@ -357,6 +359,16 @@ for deep diagnostic sessions.
 - An ESP32 board with JTAG access (built-in USB-JTAG or external probe)
 
 No additional Python packages are needed — all tools use stdlib only.
+
+The ESP-IDF environment must be active in your shell before starting a session.
+If `idf.py` and `openocd` are not on your PATH:
+
+```bash
+. $IDF_PATH/export.sh
+```
+
+This must be done in the same shell where you run `esp-session-start.sh` and `claude`.
+The session script and the agent inherit the shell environment — if the toolchain isn't on PATH, nothing works.
 
 ## License
 

@@ -103,6 +103,11 @@ Port numbers are defined in `esp_target_config.json`.
 
 ## Prerequisites
 
+The ESP-IDF environment must be active in the shell — `idf.py`, `openocd`,
+and the cross-compiler must be on PATH. If any command fails with "command not found",
+tell the user to run `. $IDF_PATH/export.sh`
+in the shell where they started the session, then restart.
+
 OpenOCD must be running before any target commands. Start it with:
 
 ```
