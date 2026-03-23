@@ -139,6 +139,42 @@ Parse compiler output for errors and warnings. All build artifacts land in
 - `build/<project>.bin` — application binary
 - `build/<project>.elf` — ELF with debug symbols (needed for GDB and RTT)
 
+## ESP-IDF reference
+
+The ESP-IDF framework source tree is available at `$IDF_PATH`. This is
+an essential reference when writing firmware — consult it for API usage,
+peripheral driver patterns, and working examples.
+
+Key directories:
+
+```
+$IDF_PATH/
+├── examples/                     # working examples for every feature
+│   ├── peripherals/              # GPIO, I2C, SPI, UART, RMT, ADC, ...
+│   ├── wifi/                     # station, AP, scan, provisioning
+│   ├── bluetooth/                # BLE, classic BT
+│   ├── system/                   # sleep, watchdog, OTA, console, app_trace
+│   ├── protocols/                # HTTP, MQTT, mDNS, SNTP
+│   └── get-started/              # hello_world, blink
+├── components/                   # framework source code
+│   ├── driver/                   # peripheral drivers (gpio, i2c, spi, rmt, ...)
+│   ├── esp_wifi/                 # WiFi stack
+│   ├── esp_hw_support/           # low-level hardware abstraction
+│   ├── freertos/                 # FreeRTOS kernel
+│   ├── app_trace/                # application tracing (apptrace, SystemView)
+│   ├── nvs_flash/                # non-volatile storage
+│   └── ...
+└── tools/
+    └── esp_app_trace/            # host-side apptrace decoder (logtrace_proc.py)
+```
+
+When implementing a peripheral driver or feature:
+1. Check `$IDF_PATH/examples/` for a working reference implementation
+2. Read the component header in `$IDF_PATH/components/<component>/include/` for the API
+3. Check `$IDF_PATH/components/<component>/Kconfig` for menuconfig options
+
+Example: to drive a WS2812 LED via RMT, look at `$IDF_PATH/examples/peripherals/rmt/led_strip/`.
+
 ## Flashing
 
 Flash all components (bootloader + partition table + app):

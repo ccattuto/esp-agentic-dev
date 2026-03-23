@@ -124,7 +124,7 @@ ESP32-C3 with built-in USB-JTAG:
 }
 ```
 
-Edit board.md to describe your specific development board
+Edit `board.md` to describe your specific development board
 — pin assignments, LEDs, buttons, I2C/SPI buses, and any hardware constraints.
 This gives the agent the context it needs to write correct pin
 configurations and peripheral initialization code.
