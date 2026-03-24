@@ -159,7 +159,7 @@ class ProjectConfig:
 
     @property
     def svd_path(self):
-        svd = self.data.get('svd')
+        svd = self.chip.data.get('svd')
         if svd:
             return self.config_dir / svd
         return None
