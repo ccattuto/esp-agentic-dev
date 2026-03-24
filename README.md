@@ -32,6 +32,8 @@ invoke directly. No IDE, no GUI, no interactive prompts. For detailed
 implementation decisions see
 [docs/design-decisions.md](docs/design-decisions.md).
 
+For ESP32 devices with built-in JTAG support (e.g., ESP32C3), **no additional debug hardware is required**.
+
 ## Architecture
 
 ```
