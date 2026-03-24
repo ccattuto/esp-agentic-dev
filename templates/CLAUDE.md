@@ -180,6 +180,26 @@ When implementing a peripheral driver or feature:
 
 Example: to drive a WS2812 LED via RMT, look at `$IDF_PATH/examples/peripherals/rmt/led_strip/`.
 
+### Never guess chip-specific hardware constants
+
+Chip-specific values — GPIO matrix signal indices, register bitfield positions,
+opcode encodings, peripheral base addresses — are arbitrary hardware assignments
+that vary between chip families. They cannot be derived from first principles and
+must never be guessed or assumed from memory.
+
+Always look them up in the chip-specific headers before writing any register-level
+code:
+
+```
+$IDF_PATH/components/soc/<chip>/include/soc/
+  gpio_sig_map.h      — GPIO matrix signal indices (IN_IDX / OUT_IDX per peripheral)
+  io_mux_reg.h        — IO_MUX register bit definitions
+  <periph>_struct.h   — peripheral register layouts and bitfield positions
+
+$IDF_PATH/components/hal/<chip>/include/hal/
+  <periph>_ll.h       — low-level driver constants (opcodes, enums, timing formulas)
+```
+
 ## Flashing
 
 Flash all components (bootloader + partition table + app):
