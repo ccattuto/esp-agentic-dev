@@ -17,9 +17,17 @@
     "Bash(grep:*)",
     "Bash(ls:*)",
     "Bash(echo:*)",
+    "Bash(find:*)",
+    "Bash(tree:*)",
+    "Bash(file:*)",
+    "Bash(sort:*)",
+    "Bash(awk:*)",
+    "Bash(sed:*)",
+    "Bash(diff:*)",
     "Bash(riscv32-esp-elf-gdb:*)",
     "Bash(riscv32-esp-elf-gdb-no-python:*)",
     "Bash(riscv32-esp-elf-nm:*)",
+    "Bash(riscv32-esp-elf-objdump:*)",
     "Bash(riscv32-esp-elf-addr2line:*)"
   ]
 }
