@@ -27,6 +27,7 @@ Create a JSON file named `<chip>.json` with the following structure:
 {
   "name": "ESP32-S3",
   "arch": "xtensa",
+  "svd": "chips/esp32c3.svd",
   "memory": {
     "sram": {
       "start": "0x3FC88000",
@@ -50,6 +51,13 @@ Must have `start` (hex string) and `size` (hex string). This is used
 by `rtt_reader.py` to determine the search range when scanning for the
 RTT control block, and by `esp_target.py memmap` to display the memory
 layout.
+
+### Optional fields
+
+**`svd`** — Points to an SVD file for the chip.
+Download from https://github.com/espressif/svd.
+The SVD file provides peripheral register definitions with field-level
+bitfield layouts, enabling `esp_target.py decode` and `read-reg`.
 
 ### Optional memory regions
 
@@ -111,16 +119,14 @@ Key sections to look for:
 
 ### Companion files
 
-A chip config on its own isn't enough. You also need:
-
-**An SVD file** — download from https://github.com/espressif/svd.
-The SVD provides peripheral register definitions with field-level
-bitfield layouts, enabling `esp_target.py decode` and `read-reg`.
-
-**An `esp_target_config.json`** — references the chip config and SVD,
+**An `esp_target_config.json`** — references the board config,
 and adds the tooling settings (OpenOCD board config, flash command,
 GDB executable, ports). See `templates/esp_target_config.json` for
 the structure.
+
+An **optional SVD file** — Download from https://github.com/espressif/svd.
+The SVD file provides peripheral register definitions with field-level
+bitfield layouts, enabling `esp_target.py decode` and `read-reg`.
 
 ### Testing a new chip config
 

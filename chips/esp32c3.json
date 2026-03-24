@@ -1,6 +1,7 @@
 {
   "name": "ESP32-C3",
   "arch": "riscv32",
+  "svd": "chips/esp32c3.svd",
   "memory": {
     "sram": {
       "start": "0x3FC80000",

@@ -10,13 +10,13 @@ Two configuration files control the tooling:
 
 **`esp_target_config.json`** — project-level tooling setup:
 - Which chip hardware description to use
-- Which SVD file for peripheral register definitions
 - OpenOCD settings (board config, ports, flash command)
 - GDB executable
 - Logging method (rtt or apptrace)
 
 **`chips/<chip>.json`** — pure hardware reference (memory map, architecture).
 Referenced by `esp_target_config.json`. Never needs editing per-project.
+A chip JSON file may contain a reference to the corresponding SVD file with peripheral register definitions.
 
 **`board.md`** — describes the specific development board: GPIO pin
 assignments, I2C/SPI bus connections, LEDs (type, pin, protocol),
@@ -63,7 +63,9 @@ project/
 │       └── partition-table.bin
 ├── chips/
 │   └── <chip>.json               # hardware reference (memory map, architecture)
-├── <chip>.svd                    # CMSIS SVD peripheral register definitions
+│   └── <chip>.svd                # CMSIS SVD peripheral register definitions (optional)
+├── boards/
+│   └── <board>.md                # sample board files
 ├── esp_target.py                 # target control tool
 ├── svd_parser.py                 # SVD parser (used by esp_target.py)
 ├── rtt_reader.py                 # RTT log reader daemon
@@ -82,6 +84,7 @@ Claude Code
   ├── idf.py build                    → compile firmware
   ├── esp_target.py (shell exec)      → flash, reset, inspect registers
   ├── GDB batch scripts (on-demand)   → symbol-aware debugging
+  ├── reads board.md                  → board description
   ├── reads .esp-agent/rtt.log        → firmware log output
   └── reads .esp-agent/openocd.log    → infrastructure diagnostics
 

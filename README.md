@@ -80,7 +80,6 @@ cp esp-agentic-dev/tools/rtt_reader.py .
 # Copy templates
 cp esp-agentic-dev/templates/CLAUDE.md .
 cp esp-agentic-dev/templates/esp_target_config.json .
-cp esp-agentic-dev/templates/board.md .
 cp esp-agentic-dev/templates/esp-session-start.sh .
 cp esp-agentic-dev/templates/esp-session-stop.sh .
 chmod +x esp-session-start.sh esp-session-stop.sh
@@ -88,6 +87,9 @@ chmod +x esp-session-start.sh esp-session-stop.sh
 # Copy chip config
 mkdir -p chips
 cp esp-agentic-dev/chips/esp32c3.json chips/
+
+# Provide board configuration, or copy it from boards/
+cp esp-agentic-dev/boards/codecellc3.md board.md
 ```
 
 ### 3. Get the SVD file
@@ -95,7 +97,7 @@ cp esp-agentic-dev/chips/esp32c3.json chips/
 Download the CMSIS SVD for your chip from [Espressif's SVD repo](https://github.com/espressif/svd):
 
 ```bash
-curl -L -o esp32c3.svd \
+curl -L -o chips/esp32c3.svd \
     https://raw.githubusercontent.com/espressif/svd/main/svd/esp32c3.svd
 ```
 
@@ -107,7 +109,6 @@ ESP32-C3 with built-in USB-JTAG:
 ```json
 {
   "chip": "chips/esp32c3.json",
-  "svd": "esp32c3.svd",
   "openocd": {
     "board_cfg": "board/esp32c3-builtin.cfg",
     "flash_command": "program_esp",

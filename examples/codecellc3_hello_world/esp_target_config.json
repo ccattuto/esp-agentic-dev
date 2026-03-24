@@ -1,6 +1,5 @@
 {
   "chip": "chips/esp32c3.json",
-  "svd": "esp32c3.svd",
   "openocd": {
     "board_cfg": "board/esp32c3-builtin.cfg",
     "flash_command": "program_esp",
