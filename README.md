@@ -177,7 +177,7 @@ python3 esp_target.py decode GPIO.OUT
 ./esp-session-stop.sh
 ```
 
-![Session](docs/img/claude_session_sample_1.png)
+![Session](docs/img/claude_session_sample_2.png)
 
 ## Adding RTT to your firmware
 
