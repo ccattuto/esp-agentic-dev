@@ -54,8 +54,7 @@ rtt_reader.py (background daemon)
   └── OpenOCD Tcl port (:6666)        → polls RTT ring buffer via mdw/mww
 ```
 
-See also this [diagram](docs/esp-agentic-architecture.pdf).
-
+![Architecture](docs/img/esp-agentic-architecture.png)
 
 ## Quick start
 
