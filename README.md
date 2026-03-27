@@ -61,7 +61,7 @@ rtt_reader.py (background daemon)
 ### 1. Clone
 
 ```bash
-git clone https://github.com/youruser/esp-agentic-dev.git
+git clone https://github.com/ccattuto/esp-agentic-dev.git
 ```
 
 ### 2. Set up your ESP-IDF project
@@ -149,7 +149,7 @@ claude   # or your preferred agentic coding tool
 ```
  
 **The agent takes it from here** — building, flashing, reading logs,
-inspecting registers, editing code. A typical agent session looks like:
+inspecting registers, editing code. Typical actions taken by the agent look like:
  
 ```bash
 # Agent builds
@@ -304,12 +304,22 @@ Recommended `.claude/settings.json` for permissions:
     "Bash(python3 esp_target.py:*)",
     "Bash(python3 rtt_reader.py:*)",
     "Bash(idf.py:*)",
+    "Bash(riscv32-esp-elf-gdb:*)",
+    "Bash(riscv32-esp-elf-gdb-no-python:*)",
+    "Bash(riscv32-esp-elf-nm:*)",
+    "Bash(riscv32-esp-elf-objdump:*)",
+    "Bash(riscv32-esp-elf-addr2line:*)",
     "Bash(cat:*)",
+    "Bash(head:*)",
     "Bash(tail:*)",
-    "Bash(wc:*)",
     "Bash(grep:*)",
     "Bash(ls:*)",
-    "Bash(head:*)"
+    "Bash(echo:*)",
+    "Bash(find:*)",
+    "Bash(file:*)",
+    "Bash(awk:*)",
+    "Bash(sed:*)",
+    "Bash(diff:*)"
   ]
 }
 ```
@@ -318,12 +328,10 @@ The typical agentic development cycle:
 
 1. Agent edits source code
 2. `idf.py build` — agent parses compiler errors, fixes them
-3. `esp_target.py flash-and-run build/ --app-only`
+3. `esp_target.py flash-and-run build/`
 4. Agent reads `.esp-agent/rtt.log` for firmware output
 5. Agent inspects hardware state via `esp_target.py decode`, `inspect`, `regs`
 6. Agent diagnoses the issue, edits code, repeats
-
-No human intervention required after the initial prompt.
 
 ## Supported chips
 
