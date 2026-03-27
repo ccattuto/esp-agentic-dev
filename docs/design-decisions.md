@@ -85,6 +85,29 @@ WiFi, BLE, and RTOS logging) by redirecting the vprintf function. However:
 Apptrace is useful for deep diagnostic sessions where you need to see
 ESP-IDF internal logging. RTT is better for everything else.
 
+### Shell interface over MCP
+
+The tools are plain command-line programs invoked via bash, not an MCP
+(Model Context Protocol) server. This was a deliberate choice:
+
+- Shell commands are universally understood. Any agent that can run bash
+  — Claude Code, Cursor, Aider, or a human — can use these tools with
+  no additional integration work.
+- The tools are directly debuggable. You can run `esp_target.py decode
+  GPIO.OUT` from a terminal and see exactly what the agent sees.
+- No additional daemon to manage. OpenOCD is already a persistent
+  process; adding an MCP server would mean two long-lived processes to
+  start, monitor, and stop.
+- CLAUDE.md is sufficient for tool discovery. The agent reads it once
+  and knows every available command, its arguments, and its output
+  format.
+
+MCP would add value in specific scenarios: managing multiple targets
+simultaneously (routing commands to the right one), streaming RTT
+output as structured events, or serving agents that cannot execute
+shell commands. If needed, an MCP server can be added as a thin wrapper
+around the existing CLI tools — the tools themselves don't change.
+
 ## Implementation details
 
 ### Session management
