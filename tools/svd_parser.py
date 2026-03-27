@@ -253,31 +253,8 @@ def _parse_registers(pel, periph, ns, base_offset=0):
         return
 
     for reg_el in registers_el.findall(f'{ns}register'):
-        reg = SVDRegister(
-            name=_text(reg_el, f'{ns}name'),
-            offset=base_offset + _int(reg_el, f'{ns}addressOffset'),
-            size=_int(reg_el, f'{ns}size', 32),
-            description=_text(reg_el, f'{ns}description'),
-            access=_text(reg_el, f'{ns}access', 'read-write'),
-            reset_value=_int(reg_el, f'{ns}resetValue'),
-        )
-
-        # Parse fields
-        fields_el = reg_el.find(f'{ns}fields')
-        if fields_el is not None:
-            for field_el in fields_el.findall(f'{ns}field'):
-                fld = SVDField(
-                    name=_text(field_el, f'{ns}name'),
-                    bit_offset=_int(field_el, f'{ns}bitOffset',
-                                    _int(field_el, f'{ns}lsb')),
-                    bit_width=_int(field_el, f'{ns}bitWidth',
-                                   _compute_width(field_el, ns)),
-                    description=_text(field_el, f'{ns}description'),
-                    access=_text(field_el, f'{ns}access', reg.access),
-                )
-                reg.fields[fld.name] = fld
-
-        periph.registers[reg.name] = reg
+        for reg in _instantiate_registers(reg_el, ns, base_offset):
+            periph.registers[reg.name] = reg
 
     # Handle clusters (register groups with a shared offset)
     for cluster_el in registers_el.findall(f'{ns}cluster'):
@@ -285,30 +262,8 @@ def _parse_registers(pel, periph, ns, base_offset=0):
         cluster_prefix = _text(cluster_el, f'{ns}name', '')
 
         for reg_el in cluster_el.findall(f'{ns}register'):
-            reg = SVDRegister(
-                name=f"{cluster_prefix}_{_text(reg_el, f'{ns}name')}" if cluster_prefix else _text(reg_el, f'{ns}name'),
-                offset=cluster_offset + _int(reg_el, f'{ns}addressOffset'),
-                size=_int(reg_el, f'{ns}size', 32),
-                description=_text(reg_el, f'{ns}description'),
-                access=_text(reg_el, f'{ns}access', 'read-write'),
-                reset_value=_int(reg_el, f'{ns}resetValue'),
-            )
-
-            fields_el = reg_el.find(f'{ns}fields')
-            if fields_el is not None:
-                for field_el in fields_el.findall(f'{ns}field'):
-                    fld = SVDField(
-                        name=_text(field_el, f'{ns}name'),
-                        bit_offset=_int(field_el, f'{ns}bitOffset',
-                                        _int(field_el, f'{ns}lsb')),
-                        bit_width=_int(field_el, f'{ns}bitWidth',
-                                       _compute_width(field_el, ns)),
-                        description=_text(field_el, f'{ns}description'),
-                        access=_text(field_el, f'{ns}access', reg.access),
-                    )
-                    reg.fields[fld.name] = fld
-
-            periph.registers[reg.name] = reg
+            for reg in _instantiate_registers(reg_el, ns, cluster_offset, cluster_prefix):
+                periph.registers[reg.name] = reg
 
 
 def _compute_width(field_el, ns):
@@ -329,6 +284,103 @@ def _compute_width(field_el, ns):
     return 1  # default to single bit
 
 
+def _collect_field_templates(reg_el, ns, default_access):
+    """Collect field definitions so we can clone them per register instance."""
+    templates = []
+    fields_el = reg_el.find(f'{ns}fields')
+    if fields_el is None:
+        return templates
+    for field_el in fields_el.findall(f'{ns}field'):
+        templates.append({
+            'name': _text(field_el, f'{ns}name'),
+            'bit_offset': _int(field_el, f'{ns}bitOffset',
+                               _int(field_el, f'{ns}lsb')),
+            'bit_width': _int(field_el, f'{ns}bitWidth',
+                              _compute_width(field_el, ns)),
+            'description': _text(field_el, f'{ns}description'),
+            'access': _text(field_el, f'{ns}access', default_access),
+        })
+    return templates
+
+
+def _expand_dim_indices(index_text, dim):
+    """Expand dimIndex text (e.g. '0-3' or 'CH0,CH1') into a list."""
+    if not index_text:
+        return [str(i) for i in range(dim)]
+
+    indices = []
+    for token in index_text.replace(' ', '').split(','):
+        if not token:
+            continue
+        if '-' in token:
+            start, end = token.split('-', 1)
+            if start.lstrip('-').isdigit() and end.lstrip('-').isdigit():
+                start_i = int(start)
+                end_i = int(end)
+                step = 1 if end_i >= start_i else -1
+                for val in range(start_i, end_i + step, step):
+                    indices.append(str(val))
+                continue
+        indices.append(token)
+
+    if len(indices) != dim:
+        return [str(i) for i in range(dim)]
+    return indices
+
+
+def _instantiate_registers(reg_el, ns, base_offset, name_prefix=""):
+    """Instantiate a register element, expanding any dim/dimIndex entries."""
+    base_name = _text(reg_el, f'{ns}name')
+    description = _text(reg_el, f'{ns}description')
+    size = _int(reg_el, f'{ns}size', 32)
+    access = _text(reg_el, f'{ns}access', 'read-write')
+    reset_value = _int(reg_el, f'{ns}resetValue')
+    base_addr = base_offset + _int(reg_el, f'{ns}addressOffset')
+
+    field_templates = _collect_field_templates(reg_el, ns, access)
+    dim = _int(reg_el, f'{ns}dim', 0)
+
+    if dim > 0:
+        dim_increment = _int(reg_el, f'{ns}dimIncrement', size // 8 if size else 0)
+        indices = _expand_dim_indices(_text(reg_el, f'{ns}dimIndex'), dim)
+        registers = []
+        for i, idx in enumerate(indices):
+            name = base_name.replace('%s', idx)
+            if name == base_name:
+                name = f"{base_name}{idx}"
+            if name_prefix:
+                name = f"{name_prefix}_{name}"
+            desc = description.replace('%s', idx) if description else ""
+            reg = SVDRegister(
+                name=name,
+                offset=base_addr + i * dim_increment,
+                size=size,
+                description=desc,
+                access=access,
+                reset_value=reset_value,
+            )
+            for tmpl in field_templates:
+                reg.fields[tmpl['name']] = SVDField(**tmpl)
+            registers.append(reg)
+        return registers
+
+    # Non-dim register
+    name = base_name
+    if name_prefix:
+        name = f"{name_prefix}_{name}"
+    reg = SVDRegister(
+        name=name,
+        offset=base_addr,
+        size=size,
+        description=description,
+        access=access,
+        reset_value=reset_value,
+    )
+    for tmpl in field_templates:
+        reg.fields[tmpl['name']] = SVDField(**tmpl)
+    return [reg]
+
+
 def load_svd_cached(svd_path, cache_dir=None):
     """Load SVD with optional JSON cache for faster subsequent loads.
 
@@ -340,8 +392,9 @@ def load_svd_cached(svd_path, cache_dir=None):
         cache_dir = svd_path.parent / '.svd_cache'
 
     # Check cache
+    cache_version = "v2"  # bump when cache format changes
     file_hash = hashlib.md5(svd_path.read_bytes()).hexdigest()[:12]
-    cache_file = Path(cache_dir) / f"{svd_path.stem}_{file_hash}.json"
+    cache_file = Path(cache_dir) / f"{svd_path.stem}_{cache_version}_{file_hash}.json"
 
     if cache_file.exists():
         return _load_from_cache(cache_file)
