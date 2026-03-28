@@ -78,6 +78,7 @@ cp esp-agentic-dev/tools/rtt_reader.py .
 
 # Copy templates
 cp esp-agentic-dev/templates/CLAUDE.md .
+# cp esp-agentic-dev/templates/CLAUDE.md AGENTS.md  (for other agents such as Codex CLI)
 cp esp-agentic-dev/templates/esp_target_config.json .
 cp esp-agentic-dev/templates/esp-session-start.sh .
 cp esp-agentic-dev/templates/esp-session-stop.sh .
@@ -156,7 +157,7 @@ inspecting registers, editing code. Typical actions taken by the agent look like
 idf.py build
  
 # Agent flashes
-python3 esp_target.py flash-and-run build/ --app-only
+python3 esp_target.py flash-and-run build/
  
 # Agent starts log capture (if firmware has RTT)
 python3 rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log &
@@ -287,11 +288,15 @@ Standalone CMSIS SVD parser using only Python stdlib. Used internally by
 clusters, fields, derived peripherals. Caches parsed results as JSON for
 fast subsequent loads.
 
-## Using with Claude Code
+## Using with coding agents
 
-Copy `CLAUDE.md` from `templates/` into your project root. It contains
-complete instructions for the agentic workflow: how to build, flash, read
-logs, inspect registers, debug crashes.
+Copy the agent instructions into your project root:
+
+- **Claude Code** reads `CLAUDE.md` — copy from `templates/CLAUDE.md`
+- **Other agents** (Codex CLI, Cursor, etc.) read `AGENTS.md` — copy `CLAUDE.md` to `AGENTS.md`
+
+The file contains complete instructions for the agentic workflow:
+how to build, flash, read logs, inspect registers, debug crashes.
 
 Recommended `.claude/settings.json` for permissions:
 
@@ -335,6 +340,9 @@ The typical agentic development cycle:
 
 ## Supported chips
 
+Any ESP32 chip with a USB-JTAG controller should work.
+This repository provides configuration files for the following chips:
+
 | Chip | Config | Tested | Notes |
 |------|--------|--------|-------|
 | ESP32-C3 | `chips/esp32c3.json` | Yes | Built-in USB-JTAG |
@@ -375,7 +383,7 @@ If `idf.py` and `openocd` are not on your PATH:
 . $IDF_PATH/export.sh
 ```
 
-This must be done in the same shell where you run `esp-session-start.sh` and `claude`.
+This must be done in the same shell where you run `esp-session-start.sh` and `claude` (or any agent).
 The session script and the agent inherit the shell environment — if the toolchain isn't on PATH, nothing works.
 
 ## License
@@ -384,8 +392,8 @@ The session script and the agent inherit the shell environment — if the toolch
 
 ## Contributing
 
-Contributions welcome. The most useful additions are:
+Contributions welcome. This has been tested with [Claude Code](https://code.claude.com) and [Codex CLI](https://developers.openai.com/codex/cli) on macOS.
+The most useful additions are:
 
-- Chip configs for other ESP32 variants (S2, S3, C6, H2)
+- Chip configs for other ESP32 variants with native JTAG support (S3, C5, C6, H2, P4)
 - Testing on different host platforms (Linux, Windows WSL)
-- Integration with other agentic coding tools beyond Claude Code
