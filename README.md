@@ -128,7 +128,7 @@ ESP32-C3 with built-in USB-JTAG:
 Edit `board.md` to describe your specific development board
 — pin assignments, LEDs, buttons, I2C/SPI buses, and any hardware constraints.
 This gives the agent the context it needs to write correct pin
-configurations and peripheral initialization code.
+configurations and peripheral initialization code. See `boards/` for examples.
 
 ### 5. Start a session
  
@@ -395,5 +395,6 @@ The session script and the agent inherit the shell environment — if the toolch
 Contributions welcome. This has been tested with [Claude Code](https://code.claude.com) and [Codex CLI](https://developers.openai.com/codex/cli) on macOS.
 The most useful additions are:
 
-- Chip configs for other ESP32 variants with native JTAG support (S3, C5, C6, H2, P4)
+- Chip configs (in `chips/`) for other ESP32 variants with native JTAG support (S3, C5, C6, H2, P4)
+- Board information (in `boards/`) for popular boards with supported ESP32 chips
 - Testing on different host platforms (Linux, Windows WSL)
