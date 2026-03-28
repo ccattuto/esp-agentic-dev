@@ -46,6 +46,7 @@ class OpenOCDConnection:
         self.sock = socket.create_connection(
             (self.host, self.port), timeout=self.timeout
         )
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     def close(self):
         if self.sock:
@@ -65,7 +66,7 @@ class OpenOCDConnection:
     def read_memory(self, addr, count):
         """Read count 32-bit words, return list of ints.
         Breaks large reads into batches to avoid Tcl response issues."""
-        MAX_WORDS_PER_READ = 32  # keep responses manageable
+        MAX_WORDS_PER_READ = 256  # 1 KB per mdw call; reduces round-trips
         values = []
         remaining = count
         cur_addr = addr
@@ -128,7 +129,7 @@ class RTTReader:
     """Discovers and polls RTT channels over OpenOCD."""
 
     def __init__(self, ocd, search_start, search_size,
-                 block_id="SEGGER RTT", poll_interval=0.05):
+                 block_id="SEGGER RTT", poll_interval=0.01):
         self.ocd = ocd
         self.search_start = search_start
         self.search_size = search_size
@@ -357,7 +358,7 @@ def main():
                         help='OpenOCD Tcl port (default: from config or 6666)')
     parser.add_argument('--channel', type=int, default=0,
                         help='RTT up-channel index (default: 0)')
-    parser.add_argument('--poll', type=float, default=0.05,
+    parser.add_argument('--poll', type=float, default=0.01,
                         help='Poll interval in seconds (default: 0.05)')
     parser.add_argument('--output', '-o',
                         help='Output file (default: stdout)')
