@@ -609,6 +609,19 @@ loops can be composed into a single call for efficiency:
 python3 esp_target.py raw "set val [mdw 0x60004000 1]; return \$val"
 ```
 
+When you need to query hardware state repeatedly (e.g., sampling GPIO levels, probing multiple registers),
+consider using OpenOCD's Tcl interpreter instead of issuing many individual commands.
+Prepare a small Tcl script and run it via:
+
+```bash
+python3 esp_target.py raw "<tcl script>"
+```
+
+You can loop, add delays (`after`), and aggregate output before returning,
+which is much faster than repeated `esp_target.py read` calls.
+Notice that the caller can only see the value returned by the script,
+so do not print results to stdout in the Tcl script — just pack the results into the return value.
+
 ## Adding RTT to new firmware
 
 1. Copy SEGGER_RTT.c, SEGGER_RTT.h, SEGGER_RTT_Conf.h, and
