@@ -257,6 +257,22 @@ class Target:
                 return token
         return 'unknown'
 
+    def wait_halt(self, timeout_s=5.0, poll_interval_s=0.05):
+        """Wait until the target reports halted, or raise on timeout."""
+        deadline = time.monotonic() + timeout_s
+        last_state = 'unknown'
+
+        while time.monotonic() < deadline:
+            last_state = self.state()
+            if last_state == 'halted':
+                return last_state
+            time.sleep(poll_interval_s)
+
+        raise OpenOCDError(
+            f"Timed out waiting for target halt after {timeout_s:.3f}s "
+            f"(last state: {last_state})"
+        )
+
     # ── Raw memory access ─────────────────────────────
 
     _MD_CMD = {32: 'mdw', 16: 'mdh', 8: 'mdb'}
@@ -332,6 +348,14 @@ class Target:
         if m:
             return int(m.group(1), 16)
         raise OpenOCDError(f"Could not read register {name}: {resp}")
+
+    def write_register(self, name, value):
+        """Write a single CPU register by name. Requires target to be halted."""
+        resp = self.command(f'reg {name} {value:#x}')
+        m = re.search(r'(0x[0-9a-fA-F]+)', resp)
+        if m:
+            return int(m.group(1), 16)
+        raise OpenOCDError(f"Could not write register {name}: {resp}")
 
     # ── SVD-aware peripheral access ───────────────────
 
@@ -537,6 +561,9 @@ Examples:
     sub.add_parser('state', help='Show target execution state')
     sub.add_parser('halt', help='Halt the CPU')
     sub.add_parser('resume', help='Resume CPU execution')
+    p = sub.add_parser('wait-halt', help='Wait until the CPU halts')
+    p.add_argument('--timeout', type=float, default=5.0, help='Timeout in seconds')
+    p.add_argument('--poll-interval', type=float, default=0.05, help='Polling interval in seconds')
     p = sub.add_parser('reset', help='Reset the target')
     p.add_argument('mode', nargs='?', default='run', choices=['run', 'halt', 'init'])
 
@@ -569,9 +596,12 @@ Examples:
     p.add_argument('value', help='Value (hex)')
 
     # CPU registers
-    sub.add_parser('regs', help='Dump CPU registers')
-    p = sub.add_parser('reg', help='Read a single CPU register')
+    sub.add_parser('cpu-regs', aliases=['regs'], help='Dump CPU registers')
+    p = sub.add_parser('cpu-reg', aliases=['reg'], help='Read a single CPU register')
     p.add_argument('name', help='Register name (e.g. pc, sp, mepc)')
+    p = sub.add_parser('cpu-reg-write', help='Write a single CPU register')
+    p.add_argument('name', help='Register name (e.g. pc, ra, a0)')
+    p.add_argument('value', help='Value to write (hex or decimal)')
 
     # Flash
     p = sub.add_parser('flash', help='Flash firmware via JTAG')
@@ -694,6 +724,13 @@ def _dispatch(target, args):
     elif args.cmd == 'reset':
         print(target.reset(args.mode))
 
+    elif args.cmd == 'wait-halt':
+        try:
+            print(target.wait_halt(args.timeout, args.poll_interval))
+        except OpenOCDError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+
     elif args.cmd == 'read-reg':
         value = target.read_reg(args.path)
         print(f"{value:#010x}  ({value})")
@@ -727,7 +764,7 @@ def _dispatch(target, args):
     elif args.cmd == 'write':
         target.write_u32(int(args.addr, 0), int(args.value, 0))
 
-    elif args.cmd == 'regs':
+    elif args.cmd in ('cpu-regs', 'regs'):
         regs = target.read_registers()
         if not regs:
             print("No registers returned. Is the target halted?", file=sys.stderr)
@@ -737,9 +774,16 @@ def _dispatch(target, args):
                 if name in regs:
                     print(f"  {name:12s} = {regs[name]:#010x}")
 
-    elif args.cmd == 'reg':
+    elif args.cmd in ('cpu-reg', 'reg'):
         try:
             val = target.read_register(args.name)
+            print(f"  {args.name:12s} = {val:#010x}")
+        except OpenOCDError as e:
+            print(f"Error: {e}", file=sys.stderr)
+
+    elif args.cmd == 'cpu-reg-write':
+        try:
+            val = target.write_register(args.name, int(args.value, 0))
             print(f"  {args.name:12s} = {val:#010x}")
         except OpenOCDError as e:
             print(f"Error: {e}", file=sys.stderr)

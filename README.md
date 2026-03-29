@@ -230,6 +230,7 @@ automatically.
 esp_target.py health              # check connectivity
 esp_target.py state               # running / halted
 esp_target.py halt                # halt CPU
+esp_target.py wait-halt           # block until CPU halts
 esp_target.py resume              # resume CPU
 esp_target.py reset run           # reset and run
 
@@ -244,9 +245,10 @@ esp_target.py read 0x3FC80000 16 --width 8 # read 16 bytes
 esp_target.py write 0x3FC80000 0xDEADBEEF
 
 # CPU registers (target must be halted)
-esp_target.py regs                # all core registers + key CSRs
-esp_target.py reg pc              # single register
-esp_target.py reg mcause
+esp_target.py cpu-regs            # all core registers + key CSRs
+esp_target.py cpu-reg pc          # single register
+esp_target.py cpu-reg mcause
+esp_target.py cpu-reg-write a0 1  # explicit CPU register write
 
 # SVD-aware peripheral access
 esp_target.py list-periph                 # all peripherals
@@ -335,7 +337,7 @@ The typical agentic development cycle:
 2. `idf.py build` — agent parses compiler errors, fixes them
 3. `esp_target.py flash-and-run build/`
 4. Agent reads `.esp-agent/rtt.log` for firmware output
-5. Agent inspects hardware state via `esp_target.py decode`, `inspect`, `regs`
+5. Agent inspects hardware state via `esp_target.py decode`, `inspect`, `cpu-regs`
 6. Agent diagnoses the issue, edits code, repeats
 
 ## Supported chips

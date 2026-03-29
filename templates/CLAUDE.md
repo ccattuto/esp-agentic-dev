@@ -243,6 +243,9 @@ python3 esp_target.py state
 # Halt CPU (required before reading CPU registers)
 python3 esp_target.py halt
 
+# Wait until CPU halts
+python3 esp_target.py wait-halt
+
 # Resume
 python3 esp_target.py resume
 
@@ -260,12 +263,15 @@ python3 esp_target.py read <addr> <count> --width 8
 
 # Dump all CPU registers (must halt first)
 python3 esp_target.py halt
-python3 esp_target.py regs
+python3 esp_target.py cpu-regs
 python3 esp_target.py resume
 
 # Read a single CPU register
-python3 esp_target.py reg pc
-python3 esp_target.py reg mepc
+python3 esp_target.py cpu-reg pc
+python3 esp_target.py cpu-reg mepc
+
+# Write a single CPU register
+python3 esp_target.py cpu-reg-write a0 0x1234
 
 # Send raw OpenOCD command
 python3 esp_target.py raw "targets"
@@ -562,7 +568,8 @@ Two log files provide diagnostic information:
 6. If something is wrong, inspect hardware state:
    - `decode` peripheral registers to check configuration
    - `inspect` an entire peripheral to see all register values
-   - `halt` + `regs` to examine CPU state after a crash
+   - `halt` + `cpu-regs` to examine CPU state after a crash
+   - `wait-halt` after an asynchronous stop condition or debugger-driven resume
    - Use GDB batch mode for symbol-aware inspection
 7. Diagnose, edit code, repeat from step 2
 
@@ -577,8 +584,9 @@ If the firmware crashes or hangs:
 
 1. Check .esp-agent/rtt.log for panic backtrace or last output before hang
 2. Halt the CPU: `esp_target.py halt`
-3. Read CPU registers: `esp_target.py regs` — check pc for crash location
-4. Read a single register: `esp_target.py reg mcause` — check exception cause
+3. Read CPU registers: `esp_target.py cpu-regs` — check pc for crash location
+4. Read a single register: `esp_target.py cpu-reg mcause` — check exception cause
+   Use `esp_target.py wait-halt` when a script needs to block until execution stops again.
 5. Use GDB for symbol-aware diagnosis (find executable and port via
    `esp_target.py info`):
    ```
