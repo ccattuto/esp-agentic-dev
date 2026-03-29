@@ -142,7 +142,7 @@ All exposed GPIOs support PWM output via the ESP32-C3's LEDC peripheral
 
 | Pin | Type | Protocol | Notes |
 |-----|------|----------|-------|
-| GPIO10 | SK6805-EC10 | WS2812 (single-wire, timed pulse) | Addressable RGB. Cannot be driven by GPIO toggle — requires RMT peripheral or SPI bit-bang. 24-bit GRB color order, 800 kHz. See `$IDF_PATH/examples/peripherals/rmt/led_strip/` for driver example. |
+| GPIO10 | SK6805-EC10 | WS2812 (single-wire, timed pulse) | Addressable RGB. 24-bit GRB color order, 800 kHz. Timing: `T0H=0.3 us`, `T0L=0.9 us`, `T1H=0.65 us`, `T1L=0.55 us`, reset low `>= 80 us` (`100 us` validated). See `$IDF_PATH/examples/peripherals/rmt/led_strip/` for one driver example. |
 
 There is no simple on/off LED on this board.
 
