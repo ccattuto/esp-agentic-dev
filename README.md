@@ -350,6 +350,7 @@ This repository provides configuration files for the following chips:
 | Chip | Config | Tested | Notes |
 |------|--------|--------|-------|
 | ESP32-C3 | `chips/esp32c3.json` | Yes | Built-in USB-JTAG |
+| ESP32-S3 | `chips/esp32s3.json` | No | Built-in USB-JTAG |
 
 Adding a new chip requires:
 1. A chip JSON file with the memory map (see `chips/esp32c3.json` as reference)
@@ -399,6 +400,6 @@ The session script and the agent inherit the shell environment — if the toolch
 Contributions welcome. This has been tested with [Claude Code](https://code.claude.com) and [Codex CLI](https://developers.openai.com/codex/cli) on macOS.
 The most useful additions are:
 
-- Chip configs (in `chips/`) for other ESP32 variants with native JTAG support (S3, C5, C6, H2, P4)
+- Chip configs (in `chips/`) for other ESP32 variants with native JTAG support (C5, C6, H2, P4)
 - Board information (in `boards/`) for popular boards with supported ESP32 chips
 - Testing on different host platforms (Linux, Windows WSL)
