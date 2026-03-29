@@ -74,7 +74,7 @@ project/
 └── .esp-agent/                   # runtime state (created at session start)
     ├── openocd.log               # OpenOCD daemon log
     ├── rtt.log                   # firmware RTT output
-    └── rtt_reader.log            # RTT reader daemon log
+    └── rtt_reader.log            # optional stderr capture if you launch rtt_reader.py with redirection
 ```
 
 ## Architecture
@@ -243,6 +243,9 @@ python3 esp_target.py state
 # Halt CPU (required before reading CPU registers)
 python3 esp_target.py halt
 
+# Wait until CPU halts
+python3 esp_target.py wait-halt
+
 # Resume
 python3 esp_target.py resume
 
@@ -260,12 +263,15 @@ python3 esp_target.py read <addr> <count> --width 8
 
 # Dump all CPU registers (must halt first)
 python3 esp_target.py halt
-python3 esp_target.py regs
+python3 esp_target.py cpu-regs
 python3 esp_target.py resume
 
 # Read a single CPU register
-python3 esp_target.py reg pc
-python3 esp_target.py reg mepc
+python3 esp_target.py cpu-reg pc
+python3 esp_target.py cpu-reg mepc
+
+# Write a single CPU register
+python3 esp_target.py cpu-reg-write a0 0x1234
 
 # Send raw OpenOCD command
 python3 esp_target.py raw "targets"
@@ -417,10 +423,16 @@ The RTT reader runs as a background daemon:
 python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log &
 ```
 
-Options for locating the RTT control block (from fastest to slowest):
-1. `--address <addr>` — known address, instant
-2. `--elf build/<project>.elf` — extracts address via nm, instant
-3. (no flag) — scans SRAM, works without symbol info but slow
+If you want reader diagnostics persisted, redirect stderr explicitly:
+```
+python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log \
+    2> .esp-agent/rtt_reader.log &
+```
+
+Options for locating the RTT control block:
+1. `--elf build/<project>.elf` — **default**: extracts address via nm, instant, always correct for the current build
+2. `--address <addr>` — known address, instant (only if address is already known)
+3. (no flag) — scans SRAM; **last resort only**, use when no ELF is available — slow
 
 Reading firmware output:
 ```
@@ -446,6 +458,8 @@ If the RTT reader produces garbage or stops receiving data:
 
 This typically happens when the firmware crashes and corrupts the ring buffer,
 or when a rebuild moves the control block to a different address.
+When `--output` targets an existing file, `rtt_reader.py` rotates the old log
+to a timestamped sibling before writing the new stream.
 
 ## ESP-IDF apptrace (alternative logging)
 
@@ -562,7 +576,8 @@ Two log files provide diagnostic information:
 6. If something is wrong, inspect hardware state:
    - `decode` peripheral registers to check configuration
    - `inspect` an entire peripheral to see all register values
-   - `halt` + `regs` to examine CPU state after a crash
+   - `halt` + `cpu-regs` to examine CPU state after a crash
+   - `wait-halt` after an asynchronous stop condition or debugger-driven resume
    - Use GDB batch mode for symbol-aware inspection
 7. Diagnose, edit code, repeat from step 2
 
@@ -577,8 +592,9 @@ If the firmware crashes or hangs:
 
 1. Check .esp-agent/rtt.log for panic backtrace or last output before hang
 2. Halt the CPU: `esp_target.py halt`
-3. Read CPU registers: `esp_target.py regs` — check pc for crash location
-4. Read a single register: `esp_target.py reg mcause` — check exception cause
+3. Read CPU registers: `esp_target.py cpu-regs` — check pc for crash location
+4. Read a single register: `esp_target.py cpu-reg mcause` — check exception cause
+   Use `esp_target.py wait-halt` when a script needs to block until execution stops again.
 5. Use GDB for symbol-aware diagnosis (find executable and port via
    `esp_target.py info`):
    ```
@@ -608,6 +624,19 @@ loops can be composed into a single call for efficiency:
 ```
 python3 esp_target.py raw "set val [mdw 0x60004000 1]; return \$val"
 ```
+
+When you need to query hardware state repeatedly (e.g., sampling GPIO levels, probing multiple registers),
+consider using OpenOCD's Tcl interpreter instead of issuing many individual commands.
+Prepare a small Tcl script and run it via:
+
+```bash
+python3 esp_target.py raw "<tcl script>"
+```
+
+You can loop, add delays (`after`), and aggregate output before returning,
+which is much faster than repeated `esp_target.py read` calls.
+Notice that the caller can only see the value returned by the script,
+so do not print results to stdout in the Tcl script — just pack the results into the return value.
 
 ## Adding RTT to new firmware
 
