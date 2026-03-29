@@ -350,6 +350,10 @@ class Target:
             raise OpenOCDError("No SVD loaded — cannot use symbolic register names")
         periph, reg, field, addr = self.svd.lookup(path)
         if field:
+            if field.bit_width == 0:
+                raise OpenOCDError(
+                    f"Field '{field.name}' has bit_width=0; cannot write"
+                )
             current = self.read_u32(addr)
             current &= ~field.mask
             current |= (value << field.bit_offset) & field.mask
