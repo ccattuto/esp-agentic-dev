@@ -15,6 +15,91 @@ battery charging, and USB-C for power/programming/debugging.
 | SRAM | 400 KB |
 | Wireless | Wi-Fi 802.11 b/g/n, Bluetooth 5 (LE) |
 
+## MCU architecture notes
+
+### RISC-V implementation
+
+The ESP32-C3 implements RV32IMC (integer, multiply/divide, compressed
+instructions). It does **not** implement the Zicntr extension, so the
+standard performance-monitoring CSRs are absent:
+
+| CSR | Address | Status |
+|-----|---------|--------|
+| `mcycle` | 0xB00 | **Not implemented** — illegal instruction trap |
+| `mcycleh` | 0xB80 | **Not implemented** — illegal instruction trap |
+| `minstret` | 0xB02 | **Not implemented** — illegal instruction trap |
+| `minstreth` | 0xB82 | **Not implemented** — illegal instruction trap |
+
+Code that uses `csrr a0, mcycle` (common on SiFive and other standard
+RISC-V cores) will raise an illegal instruction exception on this chip.
+
+### Non-standard performance counter CSRs
+
+The ESP32-C3 provides a set of custom CSRs derived from the PULP/RI5CY
+lineage that can be used for cycle counting, instruction counting, and
+other micro-architectural events:
+
+| CSR | Address | Description |
+|-----|---------|-------------|
+| `mpcer` | 0x7E0 | Performance Counter Enable Register — one bit per counter, selects which event each `mpccr` slot counts |
+| `mpcmr` | 0x7E1 | Performance Counter Mode Register — global enable (bit 0) and saturation mode (bit 1) |
+| `mpccr0`–`mpccr31` | 0x780–0x79F | Per-event 32-bit counters |
+
+### ESP-IDF API to use in firmware
+
+In ESP-IDF application code, prefer the standard CPU-counter helpers
+instead of open-coding CSR reads:
+
+```c
+#include "esp_cpu.h"
+#include "esp_private/esp_clk.h"
+
+uint32_t start = esp_cpu_get_cycle_count();
+/* ... short code section or busy-wait ... */
+uint32_t elapsed_cycles = esp_cpu_get_cycle_count() - start;
+uint32_t elapsed_us = elapsed_cycles / (esp_clk_cpu_freq() / 1000000U);
+```
+
+On ESP32-C3, `esp_cpu_get_cycle_count()` does **not** read `mcycle`.
+ESP-IDF routes it to the chip's custom performance-counter CSR path
+instead, so this is the correct API for timing short code paths and
+implementing cycle-based delays in normal firmware.
+
+### Raw CSR background
+
+Event select values for `mpcer` (written as a field per active counter):
+
+| Value | Event counted |
+|-------|--------------|
+| 0 | No event (counter disabled) |
+| 1 | Cycles |
+| 2 | Instructions retired |
+| 3 | Load data hazard stall cycles |
+| 4 | Jump/branch stall cycles |
+| 5 | Instruction memory stall cycles |
+
+If you need direct bare-metal CSR access, counter 0 can be configured
+for cycles like this:
+
+```c
+/* Enable counter 0 to count cycles */
+__asm__ volatile ("csrwi mpcmr, 0");        /* disable while configuring  */
+__asm__ volatile ("csrwi mpccr0, 0");       /* clear counter 0            */
+__asm__ volatile ("csrwi mpcer, 1");        /* counter 0 → cycles (event 1) */
+__asm__ volatile ("csrwi mpcmr, 1");        /* global enable              */
+
+uint32_t t0, t1;
+__asm__ volatile ("csrr %0, mpccr0" : "=r"(t0));
+/* ... code under measurement ... */
+__asm__ volatile ("csrr %0, mpccr0" : "=r"(t1));
+uint32_t cycles = t1 - t0;
+```
+
+Note: these CSRs are machine-mode only. They are not accessible from
+user-mode code and are not preserved across FreeRTOS context switches —
+disable the counter or save/restore `mpccr` around task boundaries if
+used in an RTOS context.
+
 ## Pin assignments
 
 ### I2C
