@@ -268,13 +268,13 @@ Reads SEGGER RTT ring buffers directly via OpenOCD memory access. Runs as
 a background process, streams firmware log output to a file or stdout.
 
 ```bash
-# Using ELF to locate control block (fast)
+# Recommended: use ELF to locate control block (instant, always correct for current build)
 rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log &
 
-# Using known address (instant)
+# Using known address (instant, if address is already known)
 rtt_reader.py --address 0x3fc8d824 --output .esp-agent/rtt.log &
 
-# Scan SRAM for control block (slow, no symbol info needed)
+# Scan SRAM for control block (fallback only — slow, use when no ELF is available)
 rtt_reader.py --output .esp-agent/rtt.log &
 
 # Just find the control block and print info

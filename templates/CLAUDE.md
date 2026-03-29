@@ -417,10 +417,10 @@ The RTT reader runs as a background daemon:
 python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log &
 ```
 
-Options for locating the RTT control block (from fastest to slowest):
-1. `--address <addr>` — known address, instant
-2. `--elf build/<project>.elf` — extracts address via nm, instant
-3. (no flag) — scans SRAM, works without symbol info but slow
+Options for locating the RTT control block:
+1. `--elf build/<project>.elf` — **default**: extracts address via nm, instant, always correct for the current build
+2. `--address <addr>` — known address, instant (only if address is already known)
+3. (no flag) — scans SRAM; **last resort only**, use when no ELF is available — slow
 
 Reading firmware output:
 ```

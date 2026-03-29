@@ -480,7 +480,15 @@ def main():
     if args.output:
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output = open(output_path, 'ab')  # append binary
+        if output_path.exists():
+            mtime = output_path.stat().st_mtime
+            ts = time.strftime('%Y-%m-%dT%H-%M-%S', time.localtime(mtime))
+            rotated = output_path.with_name(
+                f"{output_path.stem}.{ts}{output_path.suffix}"
+            )
+            output_path.rename(rotated)
+            log(f"Rotated previous log to {rotated.name}")
+        output = open(output_path, 'wb')
         log(f"Writing to {output_path}")
 
     # Handle SIGTERM gracefully
