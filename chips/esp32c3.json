@@ -5,13 +5,13 @@
   "memory": {
     "sram": {
       "start": "0x3FC80000",
-      "size": "0x64000",
-      "description": "Internal SRAM (data bus)"
+      "size": "0x60000",
+      "description": "Internal DIRAM SRAM (data bus)"
     },
     "sram_ibus": {
-      "start": "0x4037C000",
-      "size": "0x64000",
-      "description": "Internal SRAM (instruction bus alias)"
+      "start": "0x40380000",
+      "size": "0x60000",
+      "description": "Internal DIRAM SRAM (instruction bus alias)"
     },
     "rom": {
       "start": "0x40000000",
