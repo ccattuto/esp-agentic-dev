@@ -13,7 +13,7 @@ Runs as a long-lived daemon alongside OpenOCD.
 Usage:
     python3 rtt_reader.py [options]
     python3 rtt_reader.py --output .esp-agent/rtt.log
-    python3 rtt_reader.py --chip chips/esp32c3.json
+    python3 rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log
 """
 
 import socket

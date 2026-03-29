@@ -74,7 +74,7 @@ project/
 └── .esp-agent/                   # runtime state (created at session start)
     ├── openocd.log               # OpenOCD daemon log
     ├── rtt.log                   # firmware RTT output
-    └── rtt_reader.log            # RTT reader daemon log
+    └── rtt_reader.log            # optional stderr capture if you launch rtt_reader.py with redirection
 ```
 
 ## Architecture
@@ -423,6 +423,12 @@ The RTT reader runs as a background daemon:
 python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log &
 ```
 
+If you want reader diagnostics persisted, redirect stderr explicitly:
+```
+python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log \
+    2> .esp-agent/rtt_reader.log &
+```
+
 Options for locating the RTT control block:
 1. `--elf build/<project>.elf` — **default**: extracts address via nm, instant, always correct for the current build
 2. `--address <addr>` — known address, instant (only if address is already known)
@@ -452,6 +458,8 @@ If the RTT reader produces garbage or stops receiving data:
 
 This typically happens when the firmware crashes and corrupts the ring buffer,
 or when a rebuild moves the control block to a different address.
+When `--output` targets an existing file, `rtt_reader.py` rotates the old log
+to a timestamped sibling before writing the new stream.
 
 ## ESP-IDF apptrace (alternative logging)
 

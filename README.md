@@ -268,6 +268,8 @@ esp_target.py raw "targets"       # raw OpenOCD command passthrough
 
 Reads SEGGER RTT ring buffers directly via OpenOCD memory access. Runs as
 a background process, streams firmware log output to a file or stdout.
+When `--output` points to an existing file, the previous file is rotated
+to a timestamped sibling before streaming starts.
 
 ```bash
 # Recommended: use ELF to locate control block (instant, always correct for current build)
