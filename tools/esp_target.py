@@ -76,6 +76,7 @@ class OpenOCDConnection:
         self.sock = socket.create_connection(
             (self.host, self.port), timeout=self.timeout
         )
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         # Tcl port sends no banner — ready immediately
 
     def close(self):

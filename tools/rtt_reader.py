@@ -46,6 +46,7 @@ class OpenOCDConnection:
         self.sock = socket.create_connection(
             (self.host, self.port), timeout=self.timeout
         )
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     def close(self):
         if self.sock:
@@ -65,7 +66,7 @@ class OpenOCDConnection:
     def read_memory(self, addr, count):
         """Read count 32-bit words, return list of ints.
         Breaks large reads into batches to avoid Tcl response issues."""
-        MAX_WORDS_PER_READ = 32  # keep responses manageable
+        MAX_WORDS_PER_READ = 64  # 256 bytes per read — benchmark sweet spot
         values = []
         remaining = count
         cur_addr = addr
@@ -146,7 +147,7 @@ class RTTReader:
 
         addr = self.search_start
         end = self.search_start + self.search_size
-        chunk_words = 128  # 512 bytes per scan step
+        chunk_words = 256  # 1KB per chunk
         chunk_bytes = chunk_words * 4
         overlap = 16  # overlap to catch magic spanning chunks
         total = end - addr
