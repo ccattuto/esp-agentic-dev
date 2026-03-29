@@ -74,7 +74,7 @@ and `description`. Common regions:
     },
     "sram_ibus": {
       "start": "0x40370000",
-      "size": "0x78000",
+      "size": "0x70000",
       "description": "Internal SRAM (instruction bus alias)"
     },
     "rom": {
@@ -84,12 +84,12 @@ and `description`. Common regions:
     },
     "flash_dbus": {
       "start": "0x3C000000",
-      "size": "0x1000000",
+      "size": "0x2000000",
       "description": "Flash (data bus, memory-mapped, read-only)"
     },
     "flash_ibus": {
       "start": "0x42000000",
-      "size": "0x1000000",
+      "size": "0x2000000",
       "description": "Flash (instruction bus, memory-mapped, read-only)"
     },
     "peripherals": {
@@ -160,3 +160,4 @@ python3 rtt_reader.py --scan-only
 | File | Chip | Architecture | SRAM | Tested |
 |------|------|-------------|------|--------|
 | `esp32c3.json` | ESP32-C3 | RISC-V (RV32IMC) | 400KB | Yes |
+| `esp32s3.json` | ESP32-S3 | Xtensa LX7 (dual-core) | 512KB | No |

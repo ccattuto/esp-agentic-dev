@@ -1,0 +1,37 @@
+{
+  "name": "ESP32-S3",
+  "arch": "xtensa",
+  "svd": "chips/esp32s3.svd",
+  "memory": {
+    "sram": {
+      "start": "0x3FC88000",
+      "size": "0x78000",
+      "description": "Internal SRAM (data bus) — SRAM1 (416 KB) + SRAM2 (64 KB)"
+    },
+    "sram_ibus": {
+      "start": "0x40370000",
+      "size": "0x70000",
+      "description": "Internal SRAM (instruction bus alias) — SRAM0 (32 KB) + SRAM1 alias (416 KB)"
+    },
+    "rom": {
+      "start": "0x40000000",
+      "size": "0x60000",
+      "description": "Internal ROM (instruction bus) — ROM0 (256 KB) + ROM1 (128 KB)"
+    },
+    "flash_dbus": {
+      "start": "0x3C000000",
+      "size": "0x2000000",
+      "description": "Flash (data bus, memory-mapped via D-cache, read-only)"
+    },
+    "flash_ibus": {
+      "start": "0x42000000",
+      "size": "0x2000000",
+      "description": "Flash (instruction bus, memory-mapped via I-cache, read-only)"
+    },
+    "peripherals": {
+      "start": "0x60000000",
+      "size": "0x100000",
+      "description": "Peripheral registers"
+    }
+  }
+}
