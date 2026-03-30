@@ -586,14 +586,15 @@ Examples:
     p.add_argument('peripheral', help='Peripheral name')
 
     # Raw memory access
-    p = sub.add_parser('read', help='Read memory words')
+    p = sub.add_parser('read', help='Read memory (words, halfwords, or bytes)')
     p.add_argument('addr', help='Start address (hex)')
     p.add_argument('count', nargs='?', type=int, default=1, help='Word count')
     p.add_argument('--width', type=int, default=32, choices=[8, 16, 32])
 
-    p = sub.add_parser('write', help='Write a memory word')
+    p = sub.add_parser('write', help='Write memory (words, halfwords, or bytes)')
     p.add_argument('addr', help='Address (hex)')
-    p.add_argument('value', help='Value (hex)')
+    p.add_argument('values', nargs='+', help='Value(s) to write (hex)')
+    p.add_argument('--width', type=int, default=32, choices=[8, 16, 32])
 
     # CPU registers
     sub.add_parser('cpu-regs', aliases=['regs'], help='Dump CPU registers')
@@ -762,7 +763,9 @@ def _dispatch(target, args):
             print(f"  {addr + i * bytes_per:#010x}: {v:#0{fmt_width}x}")
 
     elif args.cmd == 'write':
-        target.write_u32(int(args.addr, 0), int(args.value, 0))
+        addr = int(args.addr, 0)
+        vals = [int(v, 0) for v in args.values]
+        target.write_memory(addr, vals, args.width)
 
     elif args.cmd in ('cpu-regs', 'regs'):
         regs = target.read_registers()

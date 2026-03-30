@@ -243,6 +243,7 @@ esp_target.py flash-and-run build/ --app-only
 esp_target.py read 0x3FC80000 4           # read 4 words
 esp_target.py read 0x3FC80000 16 --width 8 # read 16 bytes
 esp_target.py write 0x3FC80000 0xDEADBEEF
+esp_target.py write 0x3FC80000 0xAA 0xBB 0xCC --width 8  # multiple bytes
 
 # CPU registers (target must be halted)
 esp_target.py cpu-regs            # all core registers + key CSRs

@@ -255,8 +255,11 @@ python3 esp_target.py erase
 # Read memory (works while CPU is running)
 python3 esp_target.py read <addr> <count>
 
-# Write memory
-python3 esp_target.py write <addr> <value>
+# Write memory (one or more values)
+python3 esp_target.py write <addr> <value> [<value> ...]
+
+# Write with byte or halfword width
+python3 esp_target.py write <addr> <value> [<value> ...] --width 8
 
 # Read with byte or halfword width
 python3 esp_target.py read <addr> <count> --width 8
