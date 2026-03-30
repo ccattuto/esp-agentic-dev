@@ -29,7 +29,7 @@ Create a JSON file named `<chip>.json` with the following structure:
   "arch": "xtensa",
   "svd": "chips/esp32c3.svd",
   "memory": {
-    "sram": {
+   "sram": {
       "start": "0x3FC88000",
       "size": "0x78000",
       "description": "Internal SRAM (data bus)"
@@ -72,15 +72,15 @@ and `description`. Common regions:
       "size": "0x78000",
       "description": "Internal SRAM (data bus)"
     },
-    "sram_ibus": {
+    "sram0_ibus": {
       "start": "0x40370000",
-      "size": "0x70000",
-      "description": "Internal SRAM (instruction bus alias)"
+      "size": "0x8000",
+      "description": "Internal SRAM 0 (instruction bus alias)"
     },
-    "rom": {
-      "start": "0x40000000",
-      "size": "0x60000",
-      "description": "Internal ROM"
+    "sram1_ibus": {
+      "start": "0x40378000",
+      "size": "0x68000",
+      "description": "Internal SRAM 1 (instruction bus alias)"
     },
     "flash_dbus": {
       "start": "0x3C000000",
@@ -94,14 +94,14 @@ and `description`. Common regions:
     },
     "peripherals": {
       "start": "0x60000000",
-      "size": "0x100000",
+      "size": "0xD1000",
       "description": "Peripheral registers"
     }
   }
 }
 ```
 
-The `sram_ibus` alias is important to document because OpenOCD memory
+The `sram*_ibus` aliases are important to document because OpenOCD memory
 reads must use data bus addresses, not instruction bus aliases. Having
 both in the chip config helps the agent (and humans) avoid this mistake.
 
@@ -147,8 +147,8 @@ Verify SVD peripheral listing works:
 python3 esp_target.py list-periph
 ```
 
-If the RTT reader can scan and find a control block in SRAM, the
-memory region is correctly defined:
+If the RTT reader can scan and find a control block in SRAM,
+the memory region is correctly defined:
 
 ```bash
 python3 rtt_reader.py --scan-only

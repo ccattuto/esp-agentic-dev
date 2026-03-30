@@ -8,30 +8,40 @@
       "size": "0x800000",
       "description": "Flash (data bus, memory-mapped, read-only)"
     },
-    "sram_dbus": {
+    "sram1_dbus": {
       "start": "0x3FC80000",
       "size": "0x60000",
-      "description": "Internal SRAM (data bus)"
+      "description": "Internal SRAM 1 (data bus)"
     },
     "sram": {
       "start": "0x3FC80000",
       "size": "0x60000",
-      "description": "Internal SRAM (data bus)"
+      "description": "Internal SRAM 1 (data bus)"
     },
-    "rom_dbus": {
+    "rom1_dbus": {
       "start": "0x3FF00000",
       "size": "0x20000",
-      "description": "Internal ROM (data bus, read-only)"
+      "description": "Internal ROM 1 (data bus, read-only)"
     },
-    "rom_ibus": {
+    "rom0_ibus": {
       "start": "0x40000000",
-      "size": "0x60000",
-      "description": "Internal ROM (instruction bus, read-only)"
+      "size": "0x40000",
+      "description": "Internal ROM 0 (instruction bus, read-only)"
     },
-    "sram_ibus": {
+    "rom1_ibus": {
+      "start": "0x40040000",
+      "size": "0x20000",
+      "description": "Internal ROM 1 (instruction bus, read-only)"
+    },
+    "sram0_ibus": {
       "start": "0x4037C000",
-      "size": "0x64000",
-      "description": "Internal SRAM (instruction bus alias)"
+      "size": "0x4000",
+      "description": "Internal SRAM 0 (instruction bus alias)"
+    },
+    "sram1_ibus": {
+      "start": "0x40380000",
+      "size": "0x60000",
+      "description": "Internal SRAM 1 (instruction bus alias)"
     },
     "flash_ibus": {
       "start": "0x42000000",

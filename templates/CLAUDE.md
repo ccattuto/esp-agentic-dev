@@ -289,7 +289,7 @@ python3 esp_target.py memmap
 ```
 
 Use data bus addresses for SRAM access, not instruction bus aliases.
-The chip JSON documents both under `memory.sram` and `memory.sram_ibus`.
+The chip JSON documents both under `memory.sram` and `memory.sram*_ibus`.
 
 ## SVD-aware register inspection
 
