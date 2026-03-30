@@ -112,8 +112,7 @@ Manual, typically in Chapter 1 (System and Memory). Espressif publishes
 these at https://www.espressif.com/en/support/documents/technical-documents.
 
 Key sections to look for:
-- "Address Mapping" or "System Address Mapping" — gives the full
-  address space layout
+- "Address Mapping" or "System Address Mapping" — gives the full address space layout
 - "Internal Memory" — SRAM size and data/instruction bus addresses
 - "Peripheral Registers" — base address range for peripherals
 

@@ -11,7 +11,12 @@
     "sram_dbus": {
       "start": "0x3FC80000",
       "size": "0x60000",
-      "description": "Internal DIRAM SRAM (data bus)"
+      "description": "Internal SRAM (data bus)"
+    },
+    "sram": {
+      "start": "0x3FC80000",
+      "size": "0x60000",
+      "description": "Internal SRAM (data bus)"
     },
     "rom_dbus": {
       "start": "0x3FF00000",
@@ -26,7 +31,7 @@
     "sram_ibus": {
       "start": "0x4037C000",
       "size": "0x64000",
-      "description": "Internal DIRAM SRAM (instruction bus alias)"
+      "description": "Internal SRAM (instruction bus alias)"
     },
     "flash_ibus": {
       "start": "0x42000000",
