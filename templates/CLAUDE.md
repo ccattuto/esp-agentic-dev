@@ -277,6 +277,12 @@ python3 esp_target.py cpu-reg-write a0 0x1234
 python3 esp_target.py raw "targets"
 ```
 
+OpenOCD's raw `reg <name> <value>` write response is not uniform
+across all registers. `pc` may echo the previous value on write.
+If the post-write `pc` matters,
+follow `python3 esp_target.py cpu-reg-write pc ...`
+with an explicit `python3 esp_target.py cpu-reg pc`.
+
 For valid SRAM and peripheral addresses, check the memory map:
 ```
 python3 esp_target.py memmap
