@@ -59,7 +59,7 @@ mkdir -p "$STATE_DIR"
 
 info "Starting OpenOCD..."
 openocd -f "$BOARD_CFG" \
-    >> "$STATE_DIR/openocd.log" 2>&1 &
+    > "$STATE_DIR/openocd.log" 2>&1 &
 echo $! > "$STATE_DIR/openocd.pid"
 
 info "Waiting for OpenOCD..."
