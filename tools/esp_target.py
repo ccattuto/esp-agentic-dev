@@ -553,6 +553,8 @@ Examples:
     parser.add_argument('--config', default=None,
                         help=f'Config file (default: {CONFIG_FILENAME} in current dir)')
     parser.add_argument('--host', default='localhost', help='OpenOCD host')
+    parser.add_argument('--ocd-timeout', type=float, default=None,
+                        help='Override OpenOCD Tcl socket timeout in seconds (default: 10)')
 
     sub = parser.add_subparsers(dest='cmd')
 
@@ -694,6 +696,8 @@ Examples:
     # All remaining commands need OpenOCD
     target = Target(config, svd)
     target.ocd.host = args.host
+    if args.ocd_timeout is not None:
+        target.ocd.timeout = args.ocd_timeout
     try:
         target.connect()
     except OpenOCDError as e:
