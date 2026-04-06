@@ -80,7 +80,7 @@ project/
 ## Architecture
 
 ```
-Claude Code
+Coding Agent
   ├── idf.py build                    → compile firmware
   ├── esp_target.py (shell exec)      → flash, reset, inspect registers
   ├── GDB batch scripts (on-demand)   → symbol-aware debugging
@@ -132,7 +132,7 @@ python3 esp_target.py health
 RTT logging is started separately, after firmware with RTT support has
 been built and flashed:
 ```
-python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log &
+python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log --kill-existing --daemonize
 ```
 
 ## Building
@@ -226,8 +226,12 @@ Flash offsets come from `build/flasher_args.json` — do not hardcode them.
 After flashing new firmware, the RTT reader must be restarted (the control
 block address may have changed):
 ```
-python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log &
+python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log --kill-existing --daemonize
 ```
+This single command kills any old reader, truncates the log, daemonizes,
+and returns immediately. Then wait 2-3 seconds and read .esp-agent/rtt.log.
+If the log is empty after that, the firmware may not be producing RTT
+output — check your code rather than restarting the reader.
 
 ## Target control
 
@@ -429,19 +433,25 @@ SEGGER_RTT_printf(0, "value = %d\n", some_value);
 
 The RTT reader runs as a background daemon:
 ```
-python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log &
+python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log --kill-existing --daemonize
 ```
 
-If you want reader diagnostics persisted, redirect stderr explicitly:
-```
-python3 rtt_reader.py --elf build/<project>.elf --output .esp-agent/rtt.log \
-    2> .esp-agent/rtt_reader.log &
-```
+This is a single synchronous command that:
+- Kills any previously running rtt_reader.py (`--kill-existing`)
+- Truncates the existing log file (default behavior)
+- Forks into the background and returns immediately (`--daemonize`)
+
+After running it, wait 2-3 seconds, then read `.esp-agent/rtt.log`.
+If the log is empty, the firmware is not producing RTT output — check
+your code rather than repeatedly restarting the reader.
 
 Options for locating the RTT control block:
 1. `--elf build/<project>.elf` — **default**: extracts address via nm, instant, always correct for the current build
 2. `--address <addr>` — known address, instant (only if address is already known)
 3. (no flag) — scans SRAM; **last resort only**, use when no ELF is available — slow
+
+Additional flags:
+- `--rotate` — rotate the old log to a timestamped file instead of truncating
 
 Reading firmware output:
 ```

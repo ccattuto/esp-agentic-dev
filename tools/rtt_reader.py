@@ -14,8 +14,10 @@ Usage:
     python3 rtt_reader.py [options]
     python3 rtt_reader.py --output .esp-agent/rtt.log
     python3 rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log
+    python3 rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log --kill-existing --daemonize
 """
 
+import os
 import socket
 import struct
 import time
@@ -181,6 +183,27 @@ class RTTReader:
         log("  Control block not found.")
         return None
 
+    def wait_for_init(self, timeout=30.0, interval=0.1):
+        """Block until the RTT magic is present at cb_addr, or raise OpenOCDError."""
+        import time, struct
+        deadline = time.monotonic() + timeout
+        last_log = 0
+        while True:
+            try:
+                words = self.ocd.read_memory(self.cb_addr, 4)
+                raw = b''.join(struct.pack('<I', w) for w in words)
+                now = time.monotonic()
+                if now - last_log > 2.0:
+                    log(f"  cb[0:16]={raw[:16].hex()}")
+                    last_log = now
+                if raw[:10] == b'SEGGER RTT':
+                    return
+            except OpenOCDError as e:
+                log(f"  read error: {e}")
+            if time.monotonic() > deadline:
+                raise OpenOCDError("Timed out waiting for RTT control block initialization")
+            time.sleep(interval)
+
     def read_channel_descriptors(self):
         """Parse the control block header and channel descriptors."""
         if self.cb_addr is None:
@@ -190,6 +213,10 @@ class RTTReader:
         header_words = self.ocd.read_memory(self.cb_addr + 16, 2)
         num_up = header_words[0]
         num_down = header_words[1]
+
+        # Sanity check: reject garbage values
+        if num_up > 64 or num_down > 64:
+            raise OpenOCDError(f"Implausible channel counts: up={num_up} down={num_down}")
 
         log(f"  Up channels: {num_up}, Down channels: {num_down}")
 
@@ -329,23 +356,58 @@ def log(msg):
 def address_from_elf(elf_path):
     """Extract _SEGGER_RTT symbol address from an ELF file using nm."""
     # Try common toolchain prefixes
-    for prefix in ['riscv32-esp-elf-', 'xtensa-esp32-elf-', 'arm-none-eabi-', '']:
+    for prefix in ['riscv32-esp-elf-', 'xtensa-esp32-elf-', 'xtensa-esp32s3-elf-', '']:
         nm = f'{prefix}nm'
         try:
             result = subprocess.run(
                 [nm, elf_path],
                 capture_output=True, text=True, timeout=10
             )
-            if result.returncode == 0:
-                for line in result.stdout.splitlines():
-                    parts = line.split()
-                    if len(parts) >= 3 and '_SEGGER_RTT' in parts[2]:
-                        return int(parts[0], 16)
+            for line in result.stdout.splitlines():
+                parts = line.split()
+                if len(parts) >= 3 and '_SEGGER_RTT' in parts[2]:
+                    return int(parts[0], 16)
         except FileNotFoundError:
             continue
         except subprocess.TimeoutExpired:
             continue
     return None
+
+
+def _kill_existing_readers():
+    """Kill any running rtt_reader.py processes (other than ourselves)."""
+    my_pid = os.getpid()
+
+    # Try PID file first
+    pid_path = Path('.esp-agent/rtt_reader.pid')
+    if pid_path.exists():
+        try:
+            old_pid = int(pid_path.read_text().strip())
+            if old_pid != my_pid:
+                os.kill(old_pid, signal.SIGTERM)
+                log(f"Killed existing rtt_reader (PID {old_pid}) via pidfile")
+                time.sleep(0.3)
+        except (ValueError, ProcessLookupError, PermissionError):
+            pass
+
+    # Fallback: pgrep for any remaining instances
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'rtt_reader.py'],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in result.stdout.strip().splitlines():
+            try:
+                pid = int(line.strip())
+                if pid != my_pid:
+                    os.kill(pid, signal.SIGTERM)
+                    log(f"Killed rtt_reader (PID {pid}) via pgrep")
+            except (ValueError, ProcessLookupError, PermissionError):
+                pass
+        if result.stdout.strip():
+            time.sleep(0.3)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
 
 
 def main():
@@ -379,8 +441,42 @@ def main():
                         help='ELF file to extract control block address from (skips scan)')
     parser.add_argument('--scan-only', action='store_true',
                         help='Find control block and print info, then exit')
+    parser.add_argument('--kill-existing', action='store_true',
+                        help='Kill any running rtt_reader.py instances before starting')
+    parser.add_argument('--daemonize', action='store_true',
+                        help='Fork into background and return immediately')
+    parser.add_argument('--rotate', action='store_true',
+                        help='Rotate previous log file instead of truncating (default: truncate)')
 
     args = parser.parse_args()
+
+    # --- Kill existing rtt_reader.py instances ---
+    if args.kill_existing:
+        _kill_existing_readers()
+
+    # --- Daemonize: fork into background ---
+    if args.daemonize:
+        pid = os.fork()
+        if pid > 0:
+            # Parent: print child PID and exit
+            print(pid)
+            sys.exit(0)
+        # Child: detach from terminal
+        os.setsid()
+        # Redirect stdin/stdout/stderr to /dev/null (logs go to --output)
+        devnull = os.open(os.devnull, os.O_RDWR)
+        os.dup2(devnull, 0)
+        os.dup2(devnull, 1)
+        # Keep stderr for log() unless redirected by caller
+        if not sys.stderr.isatty():
+            os.dup2(devnull, 2)
+        os.close(devnull)
+
+    # Write PID file
+    if args.output:
+        pid_path = Path(args.output).parent / 'rtt_reader.pid'
+        pid_path.parent.mkdir(parents=True, exist_ok=True)
+        pid_path.write_text(str(os.getpid()))
 
     # Resolve config
     search_start = args.search_start
@@ -467,6 +563,12 @@ def main():
             ocd.close()
             sys.exit(1)
 
+    # Wait until the RTT control block is initialized (firmware may not have run yet)
+    if reader.cb_addr is not None:
+        log("Waiting for RTT control block to initialize...")
+        reader.wait_for_init(timeout=60.0)
+        log("RTT control block initialized.")
+
     # Parse channels
     reader.read_channel_descriptors()
 
@@ -480,7 +582,7 @@ def main():
     if args.output:
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        if output_path.exists():
+        if output_path.exists() and args.rotate:
             mtime = output_path.stat().st_mtime
             ts = time.strftime('%Y-%m-%dT%H-%M-%S', time.localtime(mtime))
             rotated = output_path.with_name(
@@ -488,6 +590,7 @@ def main():
             )
             output_path.rename(rotated)
             log(f"Rotated previous log to {rotated.name}")
+        # Default: truncate existing log
         output = open(output_path, 'wb')
         log(f"Writing to {output_path}")
 
