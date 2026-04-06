@@ -423,6 +423,7 @@ def main():
     parser.add_argument('--poll', type=float, default=0.05,
                         help='Poll interval in seconds (default: 0.05)')
     parser.add_argument('--output', '-o',
+                        default=None,
                         help='Output file (default: stdout)')
     parser.add_argument('--config',
                         help='Project config JSON (default: esp_target_config.json)')
@@ -449,6 +450,9 @@ def main():
                         help='Rotate previous log file instead of truncating (default: truncate)')
 
     args = parser.parse_args()
+
+    if args.daemonize and not args.output:
+        parser.error("--daemonize requires --output (stdout is not available in background)")
 
     # --- Kill existing rtt_reader.py instances ---
     if args.kill_existing:
