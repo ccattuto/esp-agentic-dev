@@ -41,9 +41,15 @@ other micro-architectural events:
 
 | CSR | Address | Description |
 |-----|---------|-------------|
-| `mpcer` | 0x7E0 | Performance Counter Enable Register — one bit per counter, selects which event each `mpccr` slot counts |
-| `mpcmr` | 0x7E1 | Performance Counter Mode Register — global enable (bit 0) and saturation mode (bit 1) |
-| `mpccr0`–`mpccr31` | 0x780–0x79F | Per-event 32-bit counters |
+| `mpcer` | 0x7E0 | Machine Performance Counter Event — each bit enables one event type; bit 0 = CYCLE, bit 1 = INST, bit 2 = LD_HAZARD, bit 3 = JMP_HAZARD, bit 4 = IDLE, bit 5 = LOAD, bit 6 = STORE, bit 7 = JMP_UNCOND, bit 8 = BRANCH, bit 9 = BRANCH_TAKEN, bit 10 = INST_COMP. Multiple bits may be set but counter increments by 1 per cycle even if multiple enabled events occur simultaneously |
+| `mpcmr` | 0x7E1 | Machine Performance Counter Mode — bit 0: COUNT_EN (enable/disable), bit 1: COUNT_SAT (0=wrap, 1=halt at max). **Reset value: 0x3** (enabled, saturating) |
+| `mpccr` | 0x7E2 | Machine Performance Counter Count — 32-bit R/W counter value |
+
+> **Note:** There is exactly **one** counter register (`mpccr` at 0x7E2), per
+> the ESP32-C3 TRM §1. Any access to addresses 0x780–0x79F (sometimes listed
+> in PULP/RI5CY documentation) raises an illegal-instruction exception on this chip.
+> Since `mpcmr` resets to 0x3 (enabled), the init
+> sequence is not required unless you need to change the counted event.
 
 ### ESP-IDF API to use in firmware
 
@@ -67,38 +73,41 @@ implementing cycle-based delays in normal firmware.
 
 ### Raw CSR background
 
-Event select values for `mpcer` (written as a field per active counter):
+Bit map for `mpcer` (set the corresponding bit to enable counting that event):
 
-| Value | Event counted |
-|-------|--------------|
-| 0 | No event (counter disabled) |
-| 1 | Cycles |
-| 2 | Instructions retired |
-| 3 | Load data hazard stall cycles |
-| 4 | Jump/branch stall cycles |
-| 5 | Instruction memory stall cycles |
+| Bit | Field | Event counted |
+|-----|-------|--------------|
+| 0 | CYCLE | Clock cycles (does not increment during WFI) |
+| 1 | INST | Instructions retired |
+| 2 | LD_HAZARD | Load data hazard stall cycles |
+| 3 | JMP_HAZARD | Jump hazard stall cycles |
+| 4 | IDLE | Idle cycles |
+| 5 | LOAD | Load instructions |
+| 6 | STORE | Store instructions |
+| 7 | JMP_UNCOND | Unconditional jumps |
+| 8 | BRANCH | Branch instructions |
+| 9 | BRANCH_TAKEN | Branches taken |
+| 10 | INST_COMP | Compressed instructions |
 
-If you need direct bare-metal CSR access, counter 0 can be configured
-for cycles like this:
+If you need direct bare-metal CSR access, configure and read the cycle
+counter like this:
 
 ```c
-/* Enable counter 0 to count cycles */
-__asm__ volatile ("csrwi mpcmr, 0");        /* disable while configuring  */
-__asm__ volatile ("csrwi mpccr0, 0");       /* clear counter 0            */
-__asm__ volatile ("csrwi mpcer, 1");        /* counter 0 → cycles (event 1) */
-__asm__ volatile ("csrwi mpcmr, 1");        /* global enable              */
+/* One-time init: select cycles as the counted event and enable */
+__asm__ volatile ("csrwi 0x7E1, 0");   /* mpcmr: disable while configuring */
+__asm__ volatile ("csrwi 0x7E0, 1");   /* mpcer: set bit 0 (CYCLE)         */
+__asm__ volatile ("csrwi 0x7E1, 1");   /* mpcmr: global enable             */
 
+/* Read the counter at numeric address 0x7E2 (mpccr) */
 uint32_t t0, t1;
-__asm__ volatile ("csrr %0, mpccr0" : "=r"(t0));
+__asm__ volatile ("csrr %0, 0x7E2" : "=r"(t0));
 /* ... code under measurement ... */
-__asm__ volatile ("csrr %0, mpccr0" : "=r"(t1));
+__asm__ volatile ("csrr %0, 0x7E2" : "=r"(t1));
 uint32_t cycles = t1 - t0;
 ```
 
 Note: these CSRs are machine-mode only. They are not accessible from
-user-mode code and are not preserved across FreeRTOS context switches —
-disable the counter or save/restore `mpccr` around task boundaries if
-used in an RTOS context.
+user-mode code and are not preserved across FreeRTOS context switches.
 
 ## Pin assignments
 
