@@ -1,0 +1,42 @@
+{
+  "name": "ESP32-C6",
+  "arch": "riscv32",
+  "svd": "chips/esp32c6.svd",
+  "memory": {
+    "cpu_subsystem": {
+      "start": "0x20000000",
+      "size":  "0x10000000",
+      "description": "CPU subsystem"
+    },
+    "rom": {
+      "start": "0x40000000",
+      "size":  "0x50000",
+      "description": "Internal ROM"
+    },
+    "sram": {
+      "start": "0x40800000",
+      "size":  "0x80000",
+      "description": "HP SRAM"
+    },
+    "sram_hp": {
+      "start": "0x40800000",
+      "size":  "0x80000",
+      "description": "HP SRAM"
+    },
+   "flash": {
+      "start": "0x42000000",
+      "size":  "0x1000000",
+      "description": "Flash (memory-mapped, read-only)"
+    },
+    "sram_lp": {
+      "start": "0x50000000",
+      "size":  "0x4000",
+      "description": "LP SRAM"
+    },
+    "peripherals": {
+      "start": "0x60000000",
+      "size":  "0xD0000",
+      "description": "Peripheral registers"
+    }
+  }
+}
