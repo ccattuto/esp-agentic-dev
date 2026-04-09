@@ -89,7 +89,7 @@ mkdir -p chips
 cp esp-agentic-dev/chips/esp32c3.json chips/
 
 # Provide board configuration, or copy it from boards/
-cp esp-agentic-dev/boards/codecellc3.md board.md
+cp esp-agentic-dev/boards/codecell_c3.md board.md
 ```
 
 ### 3. Get the SVD file
