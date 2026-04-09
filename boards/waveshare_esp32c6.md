@@ -269,8 +269,18 @@ Backlight is driven by SI2302CDS N-channel MOSFET (Q1):
 #### ESP-IDF driver note
 
 Use the `esp_lcd` component with SPI bus. The ST7789V3 is register-compatible
-with ST7789. Set `x_gap = 34` (34-pixel horizontal offset at reset for this
-172-pixel-wide panel) and `mirror_x = true` for correct portrait orientation.
+with ST7789. Confirmed working settings:
+
+- `x_gap = 34` (34-pixel horizontal offset; panel uses columns 34–205 of the 240-wide GRAM)
+- `y_gap = 0` (panel uses all 320 rows)
+- `mirror_x = true`, `mirror_y = false` — portrait orientation, y=0 at top (away from USB connector)
+- `data_endian = LCD_RGB_DATA_ENDIAN_LITTLE` — **required**: ESP32-C6 DMA sends the low byte of each RGB565 word first; without this the ST7789 defaults to big-endian and all colors are scrambled
+- `invert_color = true` — required for correct luminance on this normally-black panel
+- `rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB`
+- `bits_per_pixel = 16` (RGB565)
+- Backlight: GPIO22 HIGH = on (N-MOSFET gate, active high)
+- SPI clock: up to ~40 MHz tested; panel spec allows ~62.5 MHz max
+
 Reference: `$IDF_PATH/examples/peripherals/lcd/tjpgd/`
 
 ## Strapping pins
