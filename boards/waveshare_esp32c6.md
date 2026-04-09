@@ -214,7 +214,7 @@ Wi-Fi is active, unlike ESP32-C3).
 
 | GPIO | Type | Protocol | Notes |
 |------|------|----------|-------|
-| GPIO8 | WS2812B-0807 | WS2812 (single-wire, timed pulse) | Addressable RGB. 24-bit GRB color order, 800 kHz. See `$IDF_PATH/examples/peripherals/rmt/led_strip/` |
+| GPIO8 | WS2812B-0807 | WS2812 (single-wire, timed pulse) | Addressable RGB. 800 kHz. **Byte order is RGB (not GRB)**: the actual part is Xinglight XL-0807RGBC-WS2812B; its datasheet explicitly specifies R, G, B channel order throughout ("single line transmission three channel (RGB)"). Standard WS2812B uses GRB — this variant differs. Send `{0xFF,0x00,0x00}` for red. See `$IDF_PATH/examples/peripherals/rmt/led_strip/` |
 
 ## Display
 
@@ -350,3 +350,4 @@ Do not reconfigure GPIO12 or GPIO13.
 - [ESP32-C6 Datasheet](https://www.espressif.com/documentation/esp32-c6_datasheet_en.pdf)
 - [ESP32-C6 TRM (pre-release v0.3)](https://www.espressif.com/documentation/esp32-c6_technical_reference_manual_en.pdf)
 - [ST7789V3 datasheet](https://www.waveshare.com/wiki/File:ST7789V3_SPEC_V1.0.pdf)
+- [XL-0807RGBC-WS2812B datasheet (Xinglight)](https://files.waveshare.com/wiki/ESP32-S3-Nano/XL-0807RGBC-WS2812B.pdf)
