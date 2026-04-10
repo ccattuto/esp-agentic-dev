@@ -111,23 +111,29 @@ and the cross-compiler must be on PATH. If any command fails with "command not f
 tell the user to run `. $IDF_PATH/export.sh`
 in the shell where they started the session, then restart.
 
-OpenOCD must be running before any target commands. Start it with:
+OpenOCD is assumed to be already running and connected to the target.
+Verify connectivity with:
 
-```
-./esp-session-start.sh
-```
-
-This reads `esp_target_config.json`, launches OpenOCD with the correct
-board config, and verifies the target is responsive. To stop:
-
-```
-./esp-session-stop.sh
-```
-
-To verify manually:
 ```
 python3 esp_target.py health
 ```
+
+If OpenOCD becomes unresponsive, restart the session:
+
+```
+./esp-session-stop.sh
+./esp-session-start.sh
+```
+
+**`esp-session-start.sh`** — reads `esp_target_config.json`, kills any
+stale OpenOCD process, starts a fresh OpenOCD daemon (log →
+`.esp-agent/openocd.log`), waits for the Tcl port to be ready, then
+verifies the target is responsive via `esp_target.py health`. Exits with
+an error if OpenOCD fails to start.
+
+**`esp-session-stop.sh`** — kills OpenOCD (by PID from
+`.esp-agent/openocd.pid` and by process name), stops any running
+`rtt_reader.py`, and preserves logs in `.esp-agent/`.
 
 RTT logging is started separately, after firmware with RTT support has
 been built and flashed:
@@ -409,12 +415,25 @@ quit
 
 ### Halt/resume protocol with GDB
 
-GDB expects to own execution control. Follow this protocol:
+**GDB halts the CPU on connect, regardless of prior state.** When a GDB
+batch session exits, the CPU is left halted. This means:
+- Firmware stops executing — no new RTT output will appear.
+- rtt_reader.py produces no new data even if it is running.
 
-1. Halt the CPU before connecting: `esp_target.py halt`
-2. Connect GDB and do inspection
-3. When done, disconnect GDB (it exits in batch mode)
-4. Resume the CPU: `esp_target.py resume`
+Always resume after every GDB session:
+
+```
+<gdb_executable> -batch \
+    -ex "target remote :<gdb_port>" \
+    -ex "<your commands>" \
+    build/<project>.elf
+# GDB exits here — CPU is now halted
+
+python3 esp_target.py resume   # mandatory after every GDB session
+```
+
+If RTT output goes silent after a GDB session, the most likely cause is a
+halted CPU. Check with `python3 esp_target.py state` and resume if halted.
 
 While GDB is connected, do not use esp_target.py's halt, resume, or reset
 commands — GDB tracks execution state and will desynchronize.
