@@ -116,6 +116,9 @@ ESP32-C3 with built-in USB-JTAG:
     "gdb_port": 3333,
     "telnet_port": 4444
   },
+  "toolchain": {
+    "prefix": "riscv32-esp-elf-"
+  },
   "gdb": {
     "executable": "riscv32-esp-elf-gdb-no-python"
   },
@@ -274,13 +277,13 @@ to a timestamped sibling before streaming starts.
 
 ```bash
 # Recommended: use ELF to locate control block (instant, always correct for current build)
-rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log &
+rtt_reader.py --elf build/project.elf --output .esp-agent/rtt.log --daemonize
 
 # Using known address (instant, if address is already known)
-rtt_reader.py --address 0x3fc8d824 --output .esp-agent/rtt.log &
+rtt_reader.py --address 0x3fc8d824 --output .esp-agent/rtt.log --daemonize
 
 # Scan SRAM for control block (fallback only — slow, use when no ELF is available)
-rtt_reader.py --output .esp-agent/rtt.log &
+rtt_reader.py --output .esp-agent/rtt.log --daemonize
 
 # Just find the control block and print info
 rtt_reader.py --elf build/project.elf --scan-only
