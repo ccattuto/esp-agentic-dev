@@ -14,6 +14,9 @@
       "application": "0x10000"
     }
   },
+  "toolchain": {
+    "prefix": "riscv32-esp-elf-"
+  },
   "gdb": {
     "executable": "riscv32-esp-elf-gdb-no-python"
   },

@@ -11,7 +11,8 @@ Two configuration files control the tooling:
 **`esp_target_config.json`** — project-level tooling setup:
 - Which chip hardware description to use
 - OpenOCD settings (board config, ports, flash command)
-- GDB executable
+- Toolchain prefix (used to derive nm, objdump, addr2line, and default GDB)
+- GDB executable (defaults to `{prefix}gdb` if not specified)
 - Logging method (rtt or apptrace)
 
 **`chips/<chip>.json`** — pure hardware reference (memory map, architecture).

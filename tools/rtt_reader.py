@@ -353,24 +353,19 @@ def log(msg):
     print(f"[rtt] {msg}", file=sys.stderr)
 
 
-def address_from_elf(elf_path):
+def address_from_elf(elf_path, nm_executable='nm'):
     """Extract _SEGGER_RTT symbol address from an ELF file using nm."""
-    # Try common toolchain prefixes
-    for prefix in ['riscv32-esp-elf-', 'xtensa-esp32-elf-', 'xtensa-esp32s3-elf-', '']:
-        nm = f'{prefix}nm'
-        try:
-            result = subprocess.run(
-                [nm, elf_path],
-                capture_output=True, text=True, timeout=10
-            )
-            for line in result.stdout.splitlines():
-                parts = line.split()
-                if len(parts) >= 3 and '_SEGGER_RTT' in parts[2]:
-                    return int(parts[0], 16)
-        except FileNotFoundError:
-            continue
-        except subprocess.TimeoutExpired:
-            continue
+    try:
+        result = subprocess.run(
+            [nm_executable, elf_path],
+            capture_output=True, text=True, timeout=10
+        )
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and '_SEGGER_RTT' in parts[2]:
+                return int(parts[0], 16)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
     return None
 
 
@@ -515,8 +510,10 @@ def main():
         if tcl_port is None:
             tcl_port = project_cfg.get('openocd', {}).get('tcl_port', 6666)
 
+        toolchain_prefix = project_cfg.get('toolchain', {}).get('prefix', '')
         log(f"Config: {config_path}")
     else:
+        toolchain_prefix = ''
         if args.config:
             log(f"Warning: config not found: {args.config}")
 
@@ -552,7 +549,8 @@ def main():
         reader.cb_addr = args.address
         log(f"Using provided control block address: {args.address:#x}")
     elif args.elf:
-        addr = address_from_elf(args.elf)
+        nm_exe = f'{toolchain_prefix}nm' if toolchain_prefix else None
+        addr = address_from_elf(args.elf, nm_executable=nm_exe)
         if addr is None:
             log(f"Could not find _SEGGER_RTT symbol in {args.elf}")
             ocd.close()

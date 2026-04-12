@@ -182,10 +182,26 @@ class ProjectConfig:
     def flash_command(self):
         return self.data.get('openocd', {}).get('flash_command', 'program')
 
-    # GDB settings
+    # Toolchain settings
+    @property
+    def toolchain_prefix(self):
+        return self.data.get('toolchain', {}).get('prefix', '')
+
     @property
     def gdb_executable(self):
-        return self.data.get('gdb', {}).get('executable', 'gdb')
+        return self.data.get('gdb', {}).get('executable', f'{self.toolchain_prefix}gdb')
+
+    @property
+    def nm(self):
+        return f'{self.toolchain_prefix}nm'
+
+    @property
+    def objdump(self):
+        return f'{self.toolchain_prefix}objdump'
+
+    @property
+    def addr2line(self):
+        return f'{self.toolchain_prefix}addr2line'
 
     # Flash settings
     @property
@@ -678,6 +694,7 @@ Examples:
         print(f"Board config: {config.board_cfg}")
         print(f"Tcl port:     {config.tcl_port}")
         print(f"GDB port:     {config.gdb_port}")
+        print(f"Toolchain:    {config.toolchain_prefix or '(system)'}")
         print(f"GDB:          {config.gdb_executable}")
         print(f"Flash cmd:    {config.flash_command}")
         print(f"Logging:      {config.logging_method}")
