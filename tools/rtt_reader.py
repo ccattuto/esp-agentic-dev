@@ -56,14 +56,19 @@ class OpenOCDConnection:
             self.sock = None
 
     def command(self, cmd):
-        self.sock.sendall((cmd + '\x1a').encode())
-        buf = b''
-        while not buf.endswith(self.TCL_DELIMITER):
-            chunk = self.sock.recv(65536)
-            if not chunk:
-                raise OpenOCDError("Connection closed")
-            buf += chunk
-        return buf[:-1].decode(errors='replace').strip()
+        try:
+            self.sock.sendall((cmd + '\x1a').encode())
+            buf = b''
+            while not buf.endswith(self.TCL_DELIMITER):
+                chunk = self.sock.recv(65536)
+                if not chunk:
+                    raise OpenOCDError("Connection closed")
+                buf += chunk
+            return buf[:-1].decode(errors='replace').strip()
+        except OpenOCDError:
+            raise
+        except (socket.timeout, OSError) as e:
+            raise OpenOCDError(f"Socket error: {e}") from e
 
     def read_memory(self, addr, count):
         """Read count 32-bit words, return list of ints.
@@ -85,6 +90,10 @@ class OpenOCDConnection:
                             pass
             cur_addr += n * 4
             remaining -= n
+        if len(values) < count:
+            raise OpenOCDError(
+                f"read_memory at {addr:#x}: expected {count} words, got {len(values)}"
+            )
         return values
 
     def read_bytes(self, addr, nbytes):
@@ -341,6 +350,11 @@ class RTTReader:
                     self.ocd.close()
                     self.ocd.connect()
                     log("Reconnected.")
+                    # Re-sync rd_off: target may have reset (e.g. woke from deep
+                    # sleep), so its WrOff/RdOff are back at 0.  Reading the
+                    # target's current RdOff prevents consuming stale/garbage data.
+                    rd_words = self.ocd.read_memory(ch.desc_addr + 16, 1)
+                    ch.rd_off = rd_words[0]
                 except Exception:
                     log("Reconnect failed, retrying...")
                     time.sleep(2)
