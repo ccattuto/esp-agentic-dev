@@ -4,6 +4,8 @@
 
 Designed to give LLM coding agents like [Claude Code](https://code.claude.com) full autonomous control over the develop → flash → inspect → edit loop. Build, flash, inspect, and debug ESP32 firmware entirely over JTAG. For ESP32 devices with built-in JTAG support (e.g., ESP32-C3), no additional debug hardware is required.
 
+![Session](docs/img/claude_session_sample_2.png)
+
 ## Design
 
 Everything routes through a single interface: OpenOCD over JTAG.
@@ -179,8 +181,6 @@ python3 esp_target.py decode GPIO.OUT
 ```bash
 ./esp-session-stop.sh
 ```
-
-![Session](docs/img/claude_session_sample_2.png)
 
 ## Adding RTT to your firmware
 
