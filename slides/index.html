@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>esp-agentic-dev · slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0f1115;
+    --panel:   #151921;
+    --border:  #232831;
+    --fg:       #e8e6df;
+    --dim:      #9aa1aa;
+    --dimmer:  #6b7280;
+    --green:   #22c55e;
+    --yellow:  #eab308;
+    --red:      #ef4444;
+    --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--mono); }
+  body {
+    min-height: 100vh;
+    padding: 64px 40px 120px;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  /* top bar */
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--dimmer);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    margin-bottom: 56px;
+  }
+  .top .green { color: var(--green); }
+  .top a { color: var(--dimmer); text-decoration: none; border-bottom: 1px dotted var(--border); padding-bottom: 1px; }
+  .top a:hover { color: var(--fg); border-bottom-color: var(--dimmer); }
+
+  /* hero */
+  .eyebrow {
+    color: var(--green);
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 24px;
+  }
+  h1 .hash { color: var(--dimmer); margin-right: 0.15em; }
+  .lede {
+    color: var(--dim);
+    font-size: 20px;
+    max-width: 640px;
+    margin: 0 0 56px;
+  }
+
+  /* section header */
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sec-head h2 {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    margin: 0;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .sec-head .count { color: var(--dimmer); font-size: 14px; }
+
+  /* card list */
+  .list { list-style: none; padding: 0; margin: 0 0 72px; }
+  .list li {
+    display: grid;
+    grid-template-columns: 68px 1fr auto;
+    gap: 20px;
+    align-items: start;
+    padding: 22px 4px;
+    border-bottom: 1px dashed var(--border);
+    transition: background 120ms ease;
+  }
+  .list li:hover { background: rgba(255,255,255,0.012); }
+  .list .num {
+    color: var(--dimmer);
+    font-size: 14px;
+    padding-top: 4px;
+    letter-spacing: 0.1em;
+  }
+  .list .body { min-width: 0; }
+  .list .title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--fg);
+    margin: 0 0 6px;
+  }
+  .list .title a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .list li:hover .title a { border-bottom-color: var(--green); }
+  .list .desc {
+    color: var(--dim);
+    font-size: 15px;
+    margin: 0;
+  }
+  .list .meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    white-space: nowrap;
+    padding-top: 4px;
+  }
+  .pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 3px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .pill.deck   { color: var(--green); border-color: rgba(34,197,94,0.35); }
+  .pill.draft { color: var(--yellow); border-color: rgba(234,179,8,0.35); }
+  .date { color: var(--dimmer); font-size: 13px; }
+
+  .empty {
+    color: var(--dimmer);
+    padding: 22px 4px;
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  /* footer */
+  footer {
+    color: var(--dimmer);
+    font-size: 13px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  footer a { color: var(--dim); text-decoration: none; border-bottom: 1px dotted var(--border); }
+  footer a:hover { color: var(--fg); }
+
+  .blink { display: inline-block; width: 0.55em; height: 1em; background: var(--fg); margin-left: 4px; vertical-align: -0.15em; animation: blink 1.1s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
+
+  @media (max-width: 680px) {
+    body { padding: 40px 24px 80px; }
+    h1 { font-size: 36px; }
+    .list li { grid-template-columns: 1fr; }
+    .list .num { display: none; }
+    .list .meta { align-items: flex-start; flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div><span class="green">$</span> cat ./slides/index.html</div>
+    <div><a href="../">↑ repo root</a></div>
+  </div>
+
+  <div class="eyebrow">// esp-agentic-dev · slides &amp; documents</div>
+  <h1><span class="hash">#</span>archive<span class="blink"></span></h1>
+  <p class="lede">
+    Decks and long-form documents about the esp-agentic-dev framework —
+    a pure-JTAG development loop for ESP32, built for autonomous agents.
+  </p>
+
+  <div class="sec-head">
+    <h2>Slide decks</h2>
+    <div class="count">01 total</div>
+  </div>
+  <ul class="list">
+    <li>
+      <div class="num">01</div>
+      <div class="body">
+        <h3 class="title"><a href="overview-apr2026.html">overview — a hardware-in-the-loop agent framework</a></h3>
+        <p class="desc">17-slide technical walkthrough of the problem, the architecture, the three JTAG tools, RTT logging, and the dev loop. Intended for an embedded engineer audience.</p>
+      </div>
+      <div class="meta">
+        <span class="pill deck">deck · 17 slides</span>
+        <span class="date">apr 2026</span>
+      </div>
+    </li>
+  </ul>
+
+  <div class="sec-head">
+    <h2>Documents</h2>
+    <div class="count">coming soon</div>
+  </div>
+  <div class="empty">
+    // no long-form docs here yet — see <a href="../docs/" style="color:var(--dim);">/docs</a> for the markdown reference.
+  </div>
+
+  <footer>
+    <div>keyboard: <span style="color:var(--fg);">← / →</span> to navigate a deck · <span style="color:var(--fg);">p</span> to print to PDF</div>
+    <div><a href="https://github.com/ccattuto/esp-agentic-dev">github.com / ccattuto / esp-agentic-dev</a></div>
+  </footer>
+
+</div>
+</body>
+</html>
