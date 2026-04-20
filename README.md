@@ -2,7 +2,7 @@
 
 **A pure-JTAG, hardware-in-the-loop development framework for ESP32, designed for agentic coding assistants.**
 
-Designed to give LLM coding agents like [Claude Code](https://code.claude.com) full autonomous control over the develop → flash → inspect → edit loop. Build, flash, inspect, and debug ESP32 firmware entirely over JTAG. For ESP32 devices with built-in JTAG support (e.g., ESP32-C3), no additional debug hardware is required.
+Designed to give LLM coding agents like [Claude Code](https://code.claude.com) full autonomous control over the develop → flash → inspect → edit loop. Build, flash, inspect, and debug ESP32 firmware entirely over JTAG. For ESP32 devices with built-in JTAG support (e.g., ESP32-C3), no additional debug hardware is required. For a quick introduction, see the [overview slides](https://ccattuto.github.io/esp-agentic-dev/slides/overview-apr2026.html).
 
 ![Session](docs/img/claude_session_sample_2.png)
 
@@ -30,7 +30,7 @@ autonomous firmware development practical. The agent doesn’t need to
 guess what went wrong; it can look.
 
 Everything is controlled by command-line tools that an LLM agent can
-invoke directly. No IDE, no GUI, no interactive prompts. For detailed
+invoke directly. No IDE, no GUI, no interactive prompts. For a quick introduction, see the [overview slides](https://ccattuto.github.io/esp-agentic-dev/slides/overview-apr2026.html). For detailed
 implementation decisions see
 [docs/design-decisions.md](docs/design-decisions.md).
 
