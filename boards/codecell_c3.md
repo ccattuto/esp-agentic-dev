@@ -175,6 +175,8 @@ There is no simple on/off LED on this board.
 | Capabilities | 3-axis accelerometer, gyroscope, magnetometer; onboard sensor fusion providing roll/pitch/yaw, activity classification, tap detection, step counting |
 | Datasheet | [BNO085](https://www.ceva-ip.com/wp-content/uploads/BNO080_085-Datasheet.pdf) |
 
+**I2C driver note:** Use the legacy `driver/i2c.h` API with `sda_pullup_en = GPIO_PULLUP_ENABLE` and `scl_pullup_en = GPIO_PULLUP_ENABLE`. The newer `driver/i2c_master.h` API's bus initialization sequence can transiently disturb SDA/SCL in a way that causes the BNO085 to latch address 0x4B instead of 0x4A.
+
 ## Power
 
 | Source | Voltage | Notes |
